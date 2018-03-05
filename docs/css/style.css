@@ -1,0 +1,62 @@
+
+body{
+    color:white;
+    background:transparent;
+}
+
+.card{
+    background:rgba(34,34,58,.7) !important;
+    padding:20px;
+    border-radius:5px;
+}
+.container-fluid{
+    padding-top: 20px;
+    max-width: 1000px;
+}
+.input-group{
+}
+h1{
+    font-weight: bold;
+    font-size: 70px;
+    z-index:-1;
+}
+#particles-js{
+    position:fixed;
+    width:100%;
+    height:100%;
+
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+
+    background: -webkit-linear-gradient(to bottom right, #000066 0%, #660033 100%);
+    background: -moz-linear-gradient(to bottom right, #000066 0%, #660033 100%);
+    background: -ms-linear-gradient(to bottom right, #000066 0%, #660033 100%);
+    background: -o-linear-gradient(to bottom right, #000066 0%, #660033 100%);
+    background: linear-gradient(to bottom right, #000066 0%, #660033 100%);
+}
+#title-section{
+    padding-top: 10vh;
+    text-align:center;
+    font-family: "Hind";
+}
+
+@-webkit-keyframes moving{
+    0%{-webkit-transform: rotate(-3deg);}
+    50%{-webkit-transform: rotate(3deg)}
+    100%{-webkit-transform: rotate(-3deg);}
+}
+
+@keyframes moving{
+    0%{transform: rotate(-3deg);}
+    50%{transform: rotate(3deg)}
+    100%{transform: rotate(-3deg);}
+}
+
+.moving{
+    -webkit-transform-origin: 50% 50%;
+    transform-origin: 50% 50%;
+    -webkit-animation: moving 3.5s ease-in-out forwards infinite;
+    animation: moving 3.5s ease-in-out forwards infinite;
+}
