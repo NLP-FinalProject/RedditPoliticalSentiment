@@ -1,17 +1,60 @@
 
+a.subreddit{
+    color: #464673;
+}
+a.comments{
+    color:black;
+    font-size:15px;
+    position:relative;
+    top:-2px;
+    opacity:0.5;
+
+}
 body{
     color:white;
     background:transparent;
 }
-
-.card{
+#about-section{
     background:rgba(34,34,58,.7) !important;
     padding:20px;
     border-radius:5px;
 }
+.blue{
+    background-color: #b3b4ff;
+    padding:3px;
+    border-radius:2px;
+}
+.red{
+    background-color: #ff7d7b;
+    padding:3px;
+    border-radius:2px;
+}
+.card.results-card{
+    margin:10px;
+    background: rgba(255, 255, 255, 0.8);
+    color:black;
+    padding:20px;
+}
+.comment-block{
+    margin-top: 10px;
+    background: white;
+    color:black;
+    opacity:1.00;
+    padding:3px;
+    border-radius:3px;
+    transition: box-shadow 0.3s ease-in-out;
+}
+.comment-block:hover{
+    box-shadow: 0 5px 5px rgba(0,0,0,0.3);
+}
 .container-fluid{
     padding-top: 20px;
-    max-width: 1000px;
+    max-width: 1200px;
+}
+#detail-header{
+    background:rgba(34,34,58,.7) !important;
+    padding:20px;
+    border-radius:5px;
 }
 .input-group{
 }
@@ -36,6 +79,11 @@ h1{
     background: -o-linear-gradient(to bottom right, #000066 0%, #660033 100%);
     background: linear-gradient(to bottom right, #000066 0%, #660033 100%);
 }
+#results-announcement{
+    font-family:"Economica";
+    font-size:50px;
+    text-align:center;
+}
 #title-section{
     padding-top: 10vh;
     text-align:center;
@@ -59,4 +107,78 @@ h1{
     transform-origin: 50% 50%;
     -webkit-animation: moving 3.5s ease-in-out forwards infinite;
     animation: moving 3.5s ease-in-out forwards infinite;
+}
+
+
+/* Temporary until a custom interface is desgined */
+.skillbar {
+    position:relative;
+    display:block;
+    margin-bottom:15px;
+    width:100%;
+    background:#eee;
+    height:35px;
+    border-radius:3px;
+    -moz-border-radius:3px;
+    -webkit-border-radius:3px;
+    -webkit-transition:0.4s linear;
+    -moz-transition:0.4s linear;
+    -ms-transition:0.4s linear;
+    -o-transition:0.4s linear;
+    transition:0.4s linear;
+    -webkit-transition-property:width, background-color;
+    -moz-transition-property:width, background-color;
+    -ms-transition-property:width, background-color;
+    -o-transition-property:width, background-color;
+    transition-property:width, background-color;
+}
+.skillbar-title {
+    position:absolute;
+    top:0;
+    left:0;
+    width:77px;
+    font-weight:bold;
+    font-size:13px;
+    color:#ffffff;
+    background:#6adcfa;
+    -webkit-border-top-left-radius:3px;
+    -webkit-border-bottom-left-radius:4px;
+    -moz-border-radius-topleft:3px;
+    -moz-border-radius-bottomleft:3px;
+    border-top-left-radius:3px;
+    border-bottom-left-radius:3px;
+}
+
+.skillbar-title span {
+    display:block;
+    background:rgba(0, 0, 0, 0.1);
+    padding:0 5px;
+    height:35px;
+    line-height:35px;
+    -webkit-border-top-left-radius:3px;
+    -webkit-border-bottom-left-radius:3px;
+    -moz-border-radius-topleft:3px;
+    -moz-border-radius-bottomleft:3px;
+    border-top-left-radius:3px;
+    border-bottom-left-radius:3px;
+}
+
+.skillbar-bar {
+    height:35px;
+    width:0px;
+    background:#6adcfa;
+    border-radius:3px;
+    -moz-border-radius:3px;
+    -webkit-border-radius:3px;
+}
+
+.skill-bar-percent {
+    position:absolute;
+    right:10px;
+    top:0;
+    font-size:11px;
+    height:35px;
+    line-height:35px;
+    color:#ffffff;
+    color:rgba(0, 0, 0, 0.4);
 }
