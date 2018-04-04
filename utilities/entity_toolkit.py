@@ -5,14 +5,51 @@ from wikidata.client import Client
 import requests
 import sys
 import wikipedia
+from bs4 import BeautifulSoup
+import re
+requests.packages.urllib3.disable_warnings()
 
 def identify_entity(sentence):
     '''
     :param sentence:
-    :return:
+    :return: A list of entities and events in the order they appear in the sentence
     '''
-    # TODO: Function
-    pass
+    serviceurl = 'https://blender04.cs.rpi.edu/~jih/cgi-bin/ere.py'
+    payload = {'textcontent': sentence}
+    # verify=False makes it so a HTTPS certificate is not required for the request
+    r = requests.get(serviceurl, params=payload, verify=False)
+
+    parsed_html = BeautifulSoup(r.text, "html.parser")
+    # We are only concerned about the div lines as that's where the entities and events are in the HTML
+    mentions = parsed_html.findAll('div')
+
+    # Our list of entities and events
+    taggedMentions = []
+
+    # For each mention in sentence
+    for i in mentions:
+        # If it is an entity like "George Bush"
+        if (str(i).startswith("<div id=\"d")):
+            entityID = re.sub("(.+Entity ID: )|(<br/>.+)", "", str(i))
+            entityMention = re.sub("(.+Entity Mention: )|(<br/>.+)", "", str(i))
+            entityMentionType = re.sub("(.+Entity Mention Type: )|(<br/>.+)", "", str(i))
+            entityType = re.sub("(.+Entity Type: )|(<br/>.+)", "", str(i))
+            entityClass = re.sub("(.+Entity Class: )|(<br/>.+)", "", str(i))
+            taggedMentions.append(['Entity', entityID, entityMention, entityMentionType, entityType, entityClass])
+        # If it is an event like "meet"
+        elif (str(i).startswith("<div id=\"e")):
+            eventID = re.sub("(.+Event ID: )|(<br/>.+)", "", str(i))
+            trigger = re.sub("(.+Trigger: )|(<br/>.+)", "", str(i))
+            eventType = re.sub("(.+Event Type: )|(<br/>.+)", "", str(i))
+            eventSubtype = re.sub("(.+Event Subtype: )|(<br/>.+)", "", str(i))
+            genericity = re.sub("(.+Genericity: )|(<br/>.+)", "", str(i))
+            modality = re.sub("(.+Modality: )|(<br/>.+)", "", str(i))
+            polarity = re.sub("(.+Polarity: )|(<br/>.+)", "", str(i))
+            tense = re.sub("(.+Tense: )|(<br/>.+)", "", str(i))
+            arguments = re.sub("(.+Arguments: )|(<br/>.+)", "", str(i))
+            person = re.sub("(.+;\">)|(</a>.+)", "", str(i))
+            taggedMentions.append(['Event', eventID, trigger, eventType, eventSubtype, genericity, modality, polarity, tense, arguments, person])
+    return taggedMentions
 
 def page_title_to_political_party(title):
     '''
