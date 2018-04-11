@@ -6,13 +6,6 @@ import requests
 import sys
 import wikipedia
 
-def identify_entity(sentence):
-    '''
-    :param sentence:
-    :return:
-    '''
-    # TODO: Function
-    pass
 
 def page_title_to_political_party(title):
     '''
@@ -61,3 +54,17 @@ def entity_to_political_party(entity, type='Person', previous_subject_titles=[])
         if found_party != 'None found':
             return title, found_party
     return 'No political figure', 'None found'
+
+def political_party_to_value(party):
+    '''
+    :param party: A string representing the name of a political party
+    :return: A value [-1.0, 1.0] representing this affiliation.
+    '''
+    # TODO: More nuanced approach, use wikipedia API rather than fixed values
+    if 'republican' in party.lowercase():
+        return 1
+    elif 'democrat' in party.lowercase():
+        return -1
+    else:
+        sys.stderr.write('ERROR: Method not yet completed.\n Cannot handle ' + party)
+        return 0
