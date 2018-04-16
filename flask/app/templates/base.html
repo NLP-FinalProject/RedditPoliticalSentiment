@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title> {% block title %} RPBE {% endblock %} </title>
+    <link rel="stylesheet" href=" {{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css?family=Hind" rel="stylesheet">
+    <script src="../static/js/bootstrap.bundle.min.js"></script>
+    <script src="../static/js/jquery-3.3.1.min.js"></script>
+</head>
+<body>
+<div id="particles-js" style="z-index:-1;"></div>
+
+{% block content %}
+
+{% endblock %}
+
+</body>
+</html>
