@@ -56,6 +56,11 @@ body{
     padding:20px;
     border-radius:5px;
 }
+#url{
+    width:80%;
+    height:36px;
+    border-radius:5px;
+}
 .input-group{
 }
 h1{
@@ -81,8 +86,19 @@ h1{
 }
 #results-announcement{
     font-family:"Economica";
-    font-size:50px;
+    font-size:42px;
     text-align:center;
+}
+#warning-announcement{
+    font-size:24px;
+    font-weight:1;
+    text-align:center;
+    color:lightgray;
+}
+#warning-announcement a:link,
+#warning-announcement a:visited,
+#warning-announcement a:hover{
+    color: #d8ecff;
 }
 #title-section{
     padding-top: 10vh;
