@@ -12,7 +12,7 @@ import nltk
 import nltk.data
 import nltk.tokenize
 import os
-import pickle
+import re
 import random
 import requests
 import string
