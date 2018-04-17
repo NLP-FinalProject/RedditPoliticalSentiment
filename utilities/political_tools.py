@@ -12,7 +12,7 @@ import nltk
 import nltk.data
 import nltk.tokenize
 import os
-import re
+import pickle
 import random
 import requests
 import string
@@ -201,7 +201,7 @@ class Tagger(ChunkParserI):
             prev_word, prev_pos = tokens[index - 1] if index > 0 else ('START', 'START')
             next_word, next_pos = tokens[index + 1] if index + 1 < len(tokens) else ('END', 'END')
 
-            next_next_word, next_next_pos = tokens[index + 2] if index + 2 < len(tokens) else ('END2', 'END2')
+            next_next_word, next_next_pos = tokens[index + 1] if index + 2 < len(tokens) else ('END2', 'END2')
             prev_prev_word, prev_prev_pos = tokens[index - 2] if index > 1 else ('START2', 'START2')
 
             return {
@@ -228,7 +228,7 @@ class Tagger(ChunkParserI):
             except LookupError:
                 sys.stderr.write('Warning: Default training data does not exist, downloading now...')
                 sys.stderr.flush()
-                nltk.download('conll2000')
+                nltk.download(conll2000)
                 try:
                     data = conll2000.chunked_sents()
                 except LookupError:
@@ -267,24 +267,12 @@ class Tagger(ChunkParserI):
         chunks = conlltags2tree([(w, t, c) for ((w, t), c) in chunks])
         return chunks
 
-    def preprocess(self, comment):
+    def preprocess(comment):
         # Break into individual sentences.
         sentences = [nltk.tokenize.word_tokenize(sentence) for sentence in tokenizer.tokenize(comment)]
         # Apply basic POS tagging.
-        try:
-            tagged_sentences = [nltk.pos_tag(sentence) for sentence in sentences]
-        except LookupError:
-            nltk.download(nltk.download('averaged_perceptron_tagger'))
-            tagged_sentences = [nltk.pos_tag(sentence) for sentence in sentences]
+        tagged_sentences = [nltk.pos_tag(sentence) for sentence in sentences]
         return tagged_sentences
-
-    def basic_parsing(self, tagged_sent):
-        grammar = r"""
-            NP: {<DT>?<JJ>*<NN|NNP>+}
-            """
-        parser = nltk.RegexpParser(grammar)
-        return parser.parse(tagged_sent)
-
 
 class SentimentClassifier():
 
@@ -295,6 +283,7 @@ class SentimentClassifier():
         'RB': 'adverb',
         'VB': 'verb',
     }
+
 
     def __int__(self, sentiment_file="sentiment_files/list.tff"):
         self.load_sentiments(sentiment_file)
@@ -331,7 +320,7 @@ class SentimentClassifier():
                 priorpolarity = vars[5][vars[5].index('=') + 1:]
             self.sentiments[(word, pos)] = Sentiment(type, word, pos, stemmed, priorpolarity)
         if len(self.sentiments.items()) == 0:
-            sys.stderr('ERROR: No lines could be read in the linked file, although the file does exist.')
+            sys.stderr('ERROR: No lines coudl be read in the linked file, although the file does exist.')
             exit(2)
 
     def tally_word_sentiments(review, sentiment_dictionary):
@@ -382,7 +371,7 @@ class SentimentClassifier():
 # Just to be used in testing.
 if __name__ == '__main__':
     print("Stating example stage . . .")
-    comment = "Test."
+    comment = "Robert Mueller Is Not The Problem: It’s Trump’s Constant Attacks On The Rule Of Law"
     tagger = Tagger(test=False)
     print(tagger.parse(tagger.preprocess(comment)[0]))
 
