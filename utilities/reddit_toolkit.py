@@ -49,12 +49,19 @@ def getFirstXComments(commentList, X):
 
 # Printing methods
 def print_all_posts(article_url):
+    stringList = []
     for post in discussions_of_article(article_url):
-        print(str(post.score) + " | (" + post.title + ") | r/" + str(post.subreddit))
+        temp = str(post.score) + " | (" + post.title + ") | r/" + str(post.subreddit)
+        print(temp)
+        stringList.append(temp)
+    return stringList
 
 def print_post_data(reddit_url):
+    stringList = []
     submission = reddit_submission(reddit_url)
-    print(str(submission_score(submission)) + " | (" + submission_title(submission) + ")")
+    temp = str(submission_score(submission)) + " | (" + submission_title(submission) + ")"
+    print(temp)
+    stringList.append(temp)
     print("")
     # print(identify_entity())
     print("---------------------------------------")
@@ -74,9 +81,15 @@ def print_post_data(reddit_url):
 
     # Print each comment
     for comment in commentList:
-        print(str(comment_score(comment)) + " | (" + comment_body(comment) + ")")
+        temp = str(comment_score(comment)) + " | (" + comment_body(comment) + ")"
+        print(temp)
+        stringList.append(temp)
         if(len(comment_replies(comment))>=1):
-            print("     " + str(comment_replies(comment)[0].score) + " | (" + comment_replies(comment)[0].body + ")")
+            temp = "     " + str(comment_replies(comment)[0].score) + " | (" + comment_replies(comment)[0].body + ")"
+            print(temp)
+            stringList.append(temp)
+
+    return stringList
 
 testRedditURL = "https://www.reddit.com/r/news/comments/8c0tb4/wells_fargo_faces_1b_fine_from_federal_regulators/"
 testArticleURL = "https://www.usatoday.com/story/money/2018/04/13/feds-seek-1-b-settlement-wells-fargo-mortgage-auto-loan-abuses/510207002/"
@@ -85,6 +98,9 @@ testArticleURL = "https://www.usatoday.com/story/money/2018/04/13/feds-seek-1-b-
 # testRedditURL = "https://www.reddit.com/r/news/comments/8co1kz/white_house_says_considering_additional_sanctions/"
 # testRedditURL = "https://www.reddit.com/r/news/comments/8cn6z3/turkey_warns_greece_after_flag_is_hoisted_on/"
 
-print_all_posts(testArticleURL)
+test1 = print_all_posts(testArticleURL)
 print("")
-print_post_data(testRedditURL)
+test2 = print_post_data(testRedditURL)
+
+print(test1)
+print(test2)
