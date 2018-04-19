@@ -114,13 +114,14 @@ def flask_packaging(url, tagger, number=5, num_top_com=3):
         # Sometimes the top post is a sticky or mod post, which should be ignored.
         top_comments = []
         for comment in submission.comments[:num_top_com+1]:
-            if comment.author.name != 'AutoModerator':
+            if comment.author is not None and comment.author.name != 'AutoModerator':
                 top_comments.append(comment)
 
         for comment in top_comments:
             comm = {}
             comm['words'] = comment.body.split(' ')
             comm['score'] = comment.score
+            print(comm['score'])
             comm['url'] = comment.permalink
             comm['r_words'] = set([])
             comm['l_words'] = set([])

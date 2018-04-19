@@ -10,14 +10,15 @@ import random
 reddit = praw.Reddit(user_agent="user", client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
 
 def random_comments(post, number):
-    comments
+    #TODO: Get random comments from within thread
+    pass
 
 def main():
     if not os.path.isdir('ground_truths'):
         os.mkdir('ground_truths')
 
     # Subreddits whose comments we'll use in tagging our ground truths.
-    subs = ['politics', 'bluemidterm2018', 'conservative', 'republicans', 'republican', 'libertarian']
+    subs = ['political_discussion', 'politics', 'bluemidterm2018', 'conservative', 'republicans', 'republican', 'libertarian']
 
     print("Press a to save as democrat-leaning in sentiment, right for"
           " republican leaning in sentiment, or s for neutral.")
@@ -29,7 +30,7 @@ def main():
     comments = []
     for post in posts:
         title = post.title
-        comments += [(title, comment.body.strip('\n').strip('\t')) for comment in random_comments(post, 50)]
+        comments += [(title, comment.body.strip('\n').strip('\t')) for comment in random_comments(post, 50)
                      if comment is not None and type(comment).__name__ == "Comment"
                      and comment.author is not None
                      and comment.author.name != 'AutoModerator'

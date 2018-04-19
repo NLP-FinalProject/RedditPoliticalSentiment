@@ -19,8 +19,11 @@ def search():
 
 @app.route('/results')
 def find_results(url):
-
     url_string = url.data['url']
-    results = rt.flask_packaging(url_string, tagger)
-
+    # Keep it from checking junk or empty strings, which can occasionally
+    # return results for some reason.
+    if 'http' in url_string:
+        results = rt.flask_packaging(url_string, tagger)
+    else:
+        results = {}
     return render_template('results.html', results=results, url=url_string)
