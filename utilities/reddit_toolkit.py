@@ -1,12 +1,11 @@
 # Collection of tools for interacting with reddit's API
 
 import praw
+import political_tools as pt
 
 from api_keys import *
 
-reddit = praw.Reddit(client_id=CLIENT_ID,
-                     client_secret=CLIENT_SECRET,
-                     user_agent=USER_AGENT)
+reddit = praw.Reddit(user_agent="user", client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
 
 # Reddit data
 def discussions_of_article(url):
@@ -44,7 +43,7 @@ def comment_score(comment):
 def comment_replies(comment):
     return comment.replies
 
-def getFirstXComments(commentList, X):
+def get_first_X_comments(commentList, X):
     return commentList[:X]
 
 # Printing methods
@@ -77,7 +76,7 @@ def print_post_data(reddit_url):
     commentList.sort(key=lambda x: x.score, reverse=True)
 
     # Get the first up to 10 comments
-    commentList = getFirstXComments(commentList, 10)
+    commentList = get_first_X_comments(commentList, 10)
 
     # Print each comment
     for comment in commentList:
@@ -91,16 +90,39 @@ def print_post_data(reddit_url):
 
     return stringList
 
-testRedditURL = "https://www.reddit.com/r/news/comments/8c0tb4/wells_fargo_faces_1b_fine_from_federal_regulators/"
-testArticleURL = "https://www.usatoday.com/story/money/2018/04/13/feds-seek-1-b-settlement-wells-fargo-mortgage-auto-loan-abuses/510207002/"
+def flask_packaging(url, number=5, num_top_com=3):
+    '''
+    Barring changes later in the project, this will be the sole method accessed by the Flask app.
+    :param url: Article URL
+    :return: A list of dictionaries for the contents of each article.
+    '''
 
-# testRedditURL = "https://www.reddit.com/r/news/comments/8ccl5m/sheriff_teen_accused_of_shooting_harnett_deputy/"
-# testRedditURL = "https://www.reddit.com/r/news/comments/8co1kz/white_house_says_considering_additional_sanctions/"
-# testRedditURL = "https://www.reddit.com/r/news/comments/8cn6z3/turkey_warns_greece_after_flag_is_hoisted_on/"
+    discussions = []
+    submissions = discussions_of_article(url)
+    count = 0
+    tagger = pt.Tagger(test=False)
+    for submission in submissions:
+        count += 1
+        dict = {}
+        dict['title'] = submission.title
+        dict['subreddit'] = submission.subreddit
+        dict['score'] = submission.score
+        dict['url'] = 'https://reddit.com' + submission.permalink
+        dict['comment_count'] = submission.num_comments
+        dict['top_comments'] = []
+        for comment in submission.comments[:num_top_com]:
+            comm = {}
+            comm['words'] = comment.body.split(' ')
+            comm['score'] = comment.score
+            comm['url'] = comment.permalink
 
-test1 = print_all_posts(testArticleURL)
-print("")
-test2 = print_post_data(testRedditURL)
+#            print(tagger.parse(tagger.preprocess(comment.body)))
 
-print(test1)
-print(test2)
+            dict['top_comments'].append(comm)
+        discussions.append(dict)
+        if count > number:
+            break
+    return discussions
+
+if __name__ == '__main__':
+    flask_packaging("https://www.usatoday.com/story/money/2018/04/13/feds-seek-1-b-settlement-wells-fargo-mortgage-auto-loan-abuses/510207002/")

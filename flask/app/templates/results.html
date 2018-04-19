@@ -4,7 +4,7 @@
 
 <div class="container-fluid" id="detail-header">
     <img href="" style="max-height:50px; display:inline-block; margin-bottom:20px;" src="{{ url_for('static', filename='img/reddit.png')}}">
-    <h4 style="display:inline-block; font-size:40px;"> <a href="index.html" style="color:white;"> Reddit Political Bias Explorer </a></h4>
+    <h4 style="display:inline-block; font-size:40px;"> <a href="index.html" style="color:white;"> Reddit Political Sentiment Explorer </a></h4>
     <form class="input-group" action="demo.html">
         <input class="form-control" name="q" type="text" placeholder="{{url_string}}">
         <span class="input-group-btn">
@@ -37,33 +37,40 @@
 
     <div class="card-deck">
         <div class="card results-card">
-            <h4><a href="#" class="subreddit"> {{ result.subreddit }} </a> | <a href="{{result.url}}"  class="comments"> {{results.comments|length}} comments   </a> </h4>
+            <h4><a href="https://reddit.com/r/{{result.subreddit}}" class="subreddit"> {{ result.subreddit }} </a> |
+                <a href="{{result.url}}"  class="comments"> {{result.score}} points | {{result.comment_count}}
+                    {% if result.comment_count == 1 %}
+                        comment
+                    {% else %}
+                        comments
+                    {% endif %}
+                </a> </h4>
             <h4 class="title"> {{ result.title }}</h4>
             <div class="skillbar clearfix " data-percent="{{ result.l_percentage }}%">
-                <div class="skillbar-title" style="background: #2980b9;"><span>Liberal </div>
+                <div class="skillbar-title" style="background: #2980b9;"><span>Pro-Democrat </div>
                 <div class="skillbar-bar" style="background: #3498db;"></div>
                 <div class="skill-bar-percent">{{ result.l_percentage }}%</div>
             </div> <!-- End Skill Bar -->
             <div class="skillbar clearfix" data-percent="{{ result.r_percentage }}%">
-                <div class="skillbar-title" style="background: #7d0004;"><span>Conservative </div>
+                <div class="skillbar-title" style="background: #7d0004;"><span>Pro-Republican </div>
                 <div class="skillbar-bar" style="background: #cd0007;"></div>
                 <div class="skill-bar-percent">{{ result.r_percentage }}%</div>
             </div> <!-- End Skill Bar -->
 
             <p>Top commments:</p>
-            {% for comment in results.top_comments %}
-            <div class="comment-block">
-                {% for word in comment %}
-
-                    {% if word in r_words %}
-                        <span class="red"> word </span>
-                    {% elif word in l_words %}
-                        <span class="blue"> word </span>
-                    {% else %}
-                        {{word}}
-                    {% endif %}
-                {% endfor %}
-            </div>
+            {% for comment in result.top_comments %}
+                <div class="comment-block">
+                    {% for word in comment.words %}
+                        {% if word in comment.r_words %}
+                            <span class="red"> word </span>
+                        {% elif word in comment.l_words %}
+                            <span class="blue"> word </span>
+                        {% else %}
+                            {{word}}
+                        {% endif %}
+                    {% endfor %}
+                <br><a class="comments" href="comment.url"> {{comment.score}} points</a>
+                </div>
             {% endfor %}
         </div>
     </div>

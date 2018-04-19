@@ -7,7 +7,7 @@ from nltk.corpus import conll2000
 from nltk.stem.snowball import SnowballStemmer
 from wikidata.client import Client
 
-import bs4 as BeautifulSoup
+from bs4 import BeautifulSoup
 import nltk
 import nltk.data
 import nltk.tokenize
@@ -20,11 +20,13 @@ import sys
 import wikipedia
 
 # Load/generate requisite nltk files
+'''
 try:
     tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
 except LookupError:
     nltk.download('punkt')
     tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
+'''
 
 ''' ADDTIONAL ENTITY TOOLS WITH THE PROF API, NOT TESTED OR INTEGRATED'''
 
@@ -196,7 +198,7 @@ def political_party_to_value(party):
 
 class Tagger(ChunkParserI):
     def __init__(self, data=None, test=False, force_new=False, **kwargs):
-        def features(tokens, index, _):
+        def features(tokens, index, history):
             word, pos = tokens[index]
             prev_word, prev_pos = tokens[index - 1] if index > 0 else ('START', 'START')
             next_word, next_pos = tokens[index + 1] if index + 1 < len(tokens) else ('END', 'END')
@@ -277,13 +279,6 @@ class Tagger(ChunkParserI):
             nltk.download(nltk.download('averaged_perceptron_tagger'))
             tagged_sentences = [nltk.pos_tag(sentence) for sentence in sentences]
         return tagged_sentences
-
-    def basic_parsing(self, tagged_sent):
-        grammar = r"""
-            NP: {<DT>?<JJ>*<NN|NNP>+}
-            """
-        parser = nltk.RegexpParser(grammar)
-        return parser.parse(tagged_sent)
 
 
 class SentimentClassifier():
