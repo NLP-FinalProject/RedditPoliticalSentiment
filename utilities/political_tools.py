@@ -151,18 +151,20 @@ def page_title_to_political_party(title):
     resp = requests.get(url='https://en.wikipedia.org/w/api.php?action=query&format=json&prop=pageprops&titles=' + title)
     data = resp.json()
     page_data = data['query']['pages'][list(data['query']['pages'].keys())[0]]
-    page_properties = page_data['pageprops']
-    item_id = page_properties['wikibase_item']
-
-    # With item id in tow, extract political affiliation
-    client = Client()
-    entity = client.get(item_id, load=True)
     try:
-        party_entity = entity.getlist(client.get('P102'))[0]
-        return str(party_entity.label)
-    except:
-        return 'None found'
+        page_properties = page_data['pageprops']
+        item_id = page_properties['wikibase_item']
 
+        # With item id in tow, extract political affiliation
+        client = Client()
+        entity = client.get(item_id, load=True)
+        try:
+            party_entity = entity.getlist(client.get('P102'))[0]
+            return str(party_entity.label)
+        except:
+            return 'None found'
+    except KeyError:
+        return 'None found'
 
 def entity_to_political_party(entity, type='Person', previous_subject_titles=[]):
     '''
