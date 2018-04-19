@@ -1,7 +1,8 @@
 # Collection of tools for interacting with reddit's API
 
 import praw
-
+# import political_tools.py
+# from political_tools import identify_entity
 from api_keys import *
 
 reddit = praw.Reddit(client_id=CLIENT_ID,
@@ -98,9 +99,11 @@ testArticleURL = "https://www.usatoday.com/story/money/2018/04/13/feds-seek-1-b-
 # testRedditURL = "https://www.reddit.com/r/news/comments/8co1kz/white_house_says_considering_additional_sanctions/"
 # testRedditURL = "https://www.reddit.com/r/news/comments/8cn6z3/turkey_warns_greece_after_flag_is_hoisted_on/"
 
-test1 = print_all_posts(testArticleURL)
-print("")
-test2 = print_post_data(testRedditURL)
+# test1 = print_all_posts(testArticleURL)
+# print("")
+# test2 = print_post_data(testRedditURL)
+#
+# print(test1)
+# print(test2)
 
-print(test1)
-print(test2)
+# print(identify_entity())

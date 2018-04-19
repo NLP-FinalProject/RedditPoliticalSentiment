@@ -6,8 +6,8 @@ from nltk.chunk import conlltags2tree, tree2conlltags
 from nltk.corpus import conll2000
 from nltk.stem.snowball import SnowballStemmer
 from wikidata.client import Client
+from bs4 import BeautifulSoup
 
-import bs4 as BeautifulSoup
 import nltk
 import nltk.data
 import nltk.tokenize
@@ -18,6 +18,8 @@ import requests
 import string
 import sys
 import wikipedia
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Load/generate requisite nltk files
 try:
@@ -381,8 +383,11 @@ class SentimentClassifier():
 
 # Just to be used in testing.
 if __name__ == '__main__':
-    print("Stating example stage . . .")
-    comment = "Test."
-    tagger = Tagger(test=False)
-    print(tagger.parse(tagger.preprocess(comment)[0]))
+    print(identify_entity("Hey George Bush"))
+
+
+    # print("Stating example stage . . .")
+    # comment = "Test."
+    # tagger = Tagger(test=False)
+    # print(tagger.parse(tagger.preprocess(comment)[0]))
 
