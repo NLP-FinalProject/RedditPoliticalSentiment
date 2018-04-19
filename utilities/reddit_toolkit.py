@@ -1,9 +1,9 @@
 # Collection of tools for interacting with reddit's API
 
 import praw
-import political_tools as pt
+import utilities.political_tools as pt
 
-from api_keys import *
+from utilities.api_keys import *
 
 reddit = praw.Reddit(user_agent="user", client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
 
