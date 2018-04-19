@@ -97,6 +97,15 @@ def flask_packaging(url, tagger, number=5, num_top_com=3):
     :return: A list of dictionaries for the contents of each article.
     '''
 
+    def markdown_to_html(markdown):
+        '''
+        :param markdown: A reddit comment in markdown form
+        :return: A string containing the passed comment, but with the markdown
+                tags replaced by html tags. I.E., ## becomes <h2>, ** becomes <i>,
+                etc.
+        '''
+        pass
+
     discussions = []
     submissions = discussions_of_article(url)
     count = 0
@@ -114,13 +123,14 @@ def flask_packaging(url, tagger, number=5, num_top_com=3):
         # Sometimes the top post is a sticky or mod post, which should be ignored.
         top_comments = []
         for comment in submission.comments[:num_top_com+1]:
-            if comment.author.name != 'AutoModerator':
+            if comment.author is not None and comment.author.name != 'AutoModerator':
                 top_comments.append(comment)
 
         for comment in top_comments:
             comm = {}
             comm['words'] = comment.body.split(' ')
             comm['score'] = comment.score
+            print(comm['score'])
             comm['url'] = comment.permalink
             comm['r_words'] = set([])
             comm['l_words'] = set([])

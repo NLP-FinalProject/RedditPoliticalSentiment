@@ -12,14 +12,13 @@
                   Explore
                   </button>
                 </span>
-
     </form>
 </div>
 
 {% if results|length == 0 %}
     <br><br><br><br>
     <h2 id="results-announcement">
-        This link is not being discussed anywhere.
+        This link has not been submitted to Reddit, or has no comments on its discussions.
     </h2>
     <h4 id="warning-announcement">
         Think this message was reached in error? <a href="mailto:klingj3@rpi.edu"> Message us! </a>
@@ -69,7 +68,12 @@
                                 {{word}}
                             {% endif %}
                         {% endfor %}
-                    <br><a class="comments" href="comment.url"> {{comment.score}} points</a>
+                    <br>
+                    {% if comment.score != 1 %}:
+                        <a class="comments" href="comment.url"> {{comment.score}} points</a>
+                    {% else %}
+                        <a class="comments" href="comment.url"> Score Hidden </a>
+                    {% endif %}
                     </div>
                 {% endfor %}
         </div>

@@ -14,11 +14,20 @@
         <form method=post>
           {{ form.url() }}
           <span class="input-group-btn">
-                  <button class="btn btn-secondary" href="demo.html" style="height:38px!important;" type="submit">
+                  <button onclick="showProgress()" class="btn btn-secondary" href="demo.html" style="height:38px!important;" type="submit">
                   Explore
                   </button>
                 </span>
+            <script>
+                function showProgress(){
+                    var x = document.getElementByID("progress")
+                    x.style.display="block"
+                }
+            </script>
         </form>
+        <div id="progress" style="text-align:center; display:None">
+            <h2> Loading ... </h2>
+        </div>
     </div>
 
     <div class="container-fluid">
