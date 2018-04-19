@@ -241,7 +241,7 @@ class Tagger(ChunkParserI):
             # Randomize the order of the data
             random.shuffle(data)
             # Its a large corpus, so just 10% suffices.
-            training_data = data[:int(.1*len(data))]
+            training_data = data[:int(.05*len(data))]
 
             training_data = [tree2conlltags(sent) for sent in training_data]
             training_data = [[((word, pos), chunk) for word, pos, chunk in sent] for sent in training_data]
@@ -278,7 +278,27 @@ class Tagger(ChunkParserI):
         except LookupError:
             nltk.download(nltk.download('averaged_perceptron_tagger'))
             tagged_sentences = [nltk.pos_tag(sentence) for sentence in sentences]
+
         return tagged_sentences
+
+    def convert(self, tree):
+        return tree2conlltags(tree)
+
+    def get_nps(self, tags):
+        relevant_tags = [(t, i) for i, t in enumerate(tags) if 'NP' in t[2] and 'NNP' == t[1]]
+        groups = []
+        group = []
+        last = -2
+        for t, i in relevant_tags:
+            if 'I' in t[2] or last+1 == i:
+                group += [t]
+                last = i
+            else:
+                groups.append(group)
+                group = [t]
+                last = i
+        names = [' '.join([g[0] for g in group]) for group in groups[1:]]
+        return names
 
 
 class SentimentClassifier():
@@ -377,7 +397,9 @@ class SentimentClassifier():
 # Just to be used in testing.
 if __name__ == '__main__':
     print("Stating example stage . . .")
-    comment = "Test."
+    comment = "Donald Trump has just been revealed to have eaten 100 cats whole."
     tagger = Tagger(test=False)
-    print(tagger.parse(tagger.preprocess(comment)[0]))
-
+    tags = tagger.parse(tagger.preprocess(comment)[0])
+    print(tags)
+    relevant = tagger.get_nps(tags)
+    print(relevant)

@@ -90,7 +90,7 @@ def print_post_data(reddit_url):
 
     return stringList
 
-def flask_packaging(url, number=5, num_top_com=3):
+def flask_packaging(url, tagger, number=5, num_top_com=3):
     '''
     Barring changes later in the project, this will be the sole method accessed by the Flask app.
     :param url: Article URL
@@ -100,23 +100,43 @@ def flask_packaging(url, number=5, num_top_com=3):
     discussions = []
     submissions = discussions_of_article(url)
     count = 0
-    tagger = pt.Tagger(test=False)
     for submission in submissions:
         count += 1
         dict = {}
+        submission.comment_sort = 'top'
         dict['title'] = submission.title
         dict['subreddit'] = submission.subreddit
         dict['score'] = submission.score
         dict['url'] = 'https://reddit.com' + submission.permalink
         dict['comment_count'] = submission.num_comments
         dict['top_comments'] = []
-        for comment in submission.comments[:num_top_com]:
+
+        # Sometimes the top post is a sticky or mod post, which should be ignored.
+        top_comments = []
+        for comment in submission.comments[:num_top_com+1]:
+            if comment.author.name != 'AutoModerator':
+                top_comments.append(comment)
+
+        for comment in top_comments:
             comm = {}
             comm['words'] = comment.body.split(' ')
             comm['score'] = comment.score
             comm['url'] = comment.permalink
+            comm['r_words'] = set([])
+            comm['l_words'] = set([])
 
-#            print(tagger.parse(tagger.preprocess(comment.body)))
+            nps = []
+            for tagged_sentence in tagger.preprocess(comment.body):
+                fully_tagged = tagger.convert(tagger.parse(tagged_sentence))
+                nps += tagger.get_nps(fully_tagged)
+            affiliations = [pt.entity_to_political_party(np) for np in nps]
+            for name, party in affiliations:
+                if 'Republican' in party:
+                    for word in name.split(' '):
+                        comm['r_words'].add(word)
+                if 'Democrat' in party:
+                    for word in name.split(' '):
+                        comm['l_words'].add(word)
 
             dict['top_comments'].append(comm)
         discussions.append(dict)
@@ -125,4 +145,5 @@ def flask_packaging(url, number=5, num_top_com=3):
     return discussions
 
 if __name__ == '__main__':
-    flask_packaging("https://www.usatoday.com/story/money/2018/04/13/feds-seek-1-b-settlement-wells-fargo-mortgage-auto-loan-abuses/510207002/")
+    tagger = pt.Tagger(test=False)
+    flask_packaging("https://www.npr.org/2018/04/19/603696749/republicans-push-bill-to-protect-mueller-without-mcconnells-support", tagger)
