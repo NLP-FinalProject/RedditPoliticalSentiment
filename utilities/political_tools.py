@@ -1,10 +1,8 @@
 # Collection of the frequently called functions we'll be using for entity linking
 
-from collections import namedtuple
 from nltk import ChunkParserI, ClassifierBasedTagger
 from nltk.chunk import conlltags2tree, tree2conlltags
 from nltk.corpus import conll2000
-from nltk.corpus import stopwords
 from nltk.stem.snowball import SnowballStemmer
 from wikidata.client import Client
 
@@ -18,6 +16,8 @@ import random
 import requests
 import sys
 import wikipedia
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Load/generate requisite nltk files
 '''
@@ -265,7 +265,7 @@ class Tagger(ChunkParserI):
                 **kwargs)
 
             # TODO: Find way to save classifier
-            ''' 
+            '''
             with open('cached_data/tagger.p', 'wb') as output:
                 pickle.dump(self.tagger, output, pickle.HIGHEST_PROTOCOL)
         else:
