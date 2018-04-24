@@ -340,7 +340,7 @@ class SentimentClassifier():
                 sentiment = 0
 
             word_sentiment = (cur_word , sentiment)
-            # print(word_sentiment)
+            print(word_sentiment)
             word_sentiment_list.append(word_sentiment)
         return word_sentiment_list
 
@@ -373,13 +373,13 @@ if __name__ == '__main__':
     temp = SentimentClassifier()
     ayy1 = temp.get_sentiments(test2)
     print(ayy1)
-    print(temp.get_comment_sentiment(ayy1))
+    print("Overall sentiment of this comment is " + str(temp.get_comment_sentiment(ayy1)) + "\n")
 
     ayy2 = temp.get_sentiments(example2)
     print(ayy2)
-    print(temp.get_comment_sentiment(ayy2))
+    print("Overall sentiment of this comment is " + str(temp.get_comment_sentiment(ayy2)))
 
-    print(temp.get_overall_comment_section_sentiment([ayy1, ayy2]))
+    print("\nOverall sentiment for the comment section is " + str(temp.get_overall_comment_section_sentiment([ayy1, ayy2])))
 
     # print("Stating example stage . . .")
     # comment = "Donald Trump has just been revealed to have eaten 100 cats whole."

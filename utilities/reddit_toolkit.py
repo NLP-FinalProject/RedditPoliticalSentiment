@@ -46,8 +46,8 @@ def comment_replies(comment):
 def get_first_X_comments(commentList, X):
     return commentList[:X]
 
-# Printing methods
-def print_all_posts(article_url):
+# Getting methods
+def get_all_posts(article_url):
     stringList = []
     for post in discussions_of_article(article_url):
         temp = str(post.score) + " | (" + post.title + ") | r/" + str(post.subreddit)
@@ -55,7 +55,7 @@ def print_all_posts(article_url):
         stringList.append(temp)
     return stringList
 
-def print_post_data(reddit_url):
+def get_post_data(reddit_url):
     stringList = []
     submission = reddit_submission(reddit_url)
     temp = str(submission_score(submission)) + " | (" + submission_title(submission) + ")"
@@ -155,5 +155,8 @@ def flask_packaging(url, tagger, number=5, num_top_com=3):
     return discussions
 
 if __name__ == '__main__':
-    tagger = pt.Tagger(test=False)
-    flask_packaging("https://www.npr.org/2018/04/19/603696749/republicans-push-bill-to-protect-mueller-without-mcconnells-support", tagger)
+    get_all_posts("https://www.telegraph.co.uk/news/2018/04/17/youtuber-faces-jail-video-forcing-homeless-man-eat-toothpaste/?share=34ca98b0")
+    print("")
+    get_post_data("https://www.reddit.com/r/news/comments/8dhcso/one_third_of_amazons_employees_in_arizona_need/")
+    # tagger = pt.Tagger(test=False)
+    # flask_packaging("https://www.npr.org/2018/04/19/603696749/republicans-push-bill-to-protect-mueller-without-mcconnells-support", tagger)
