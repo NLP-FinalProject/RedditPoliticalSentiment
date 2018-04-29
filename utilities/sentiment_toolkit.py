@@ -14,7 +14,7 @@ except LookupError:
 
 
 class SentimentClassifier(object):
-    def __init__(self, load_path=None, save_path='models/model.tfl'):
+    def __init__(self, *, load_path=None, save_path='sentiment_files/model.tfl'):
         self.word_to_id = {k: v + 3 for k, v in imdb.get_word_index().items()}
         self.word_to_id["<PAD>"] = 0
         self.word_to_id["<START>"] = 1
@@ -107,6 +107,6 @@ class SentimentClassifier(object):
 
 
 if __name__ == '__main__':
-    classifier = SentimentClassifier('models/model.tfl')
+    classifier = SentimentClassifier(load_path='sentiment_files/model.tfl')
     print(classifier.predict("I love tflearn more than anything! I want to use it every day!"))
     print(classifier.predict("I think that tflearn is the worst thing I have ever seen."))
