@@ -1,4 +1,6 @@
 
+# APPROACH 1
+
 class SentimentClassifier():
     # Used to map NLTK type to sentiment database types
     nltk_map = {
@@ -90,3 +92,53 @@ class SentimentClassifier():
         total = len(words)
 
         return positive_count, negative_count, total
+
+# APPROACH 2
+
+class SentimentClassifier():
+
+    def __init__(self, lexicon_path="sentiment_files/lexicon.tsv"):
+        self.lexicon_dictionary = {}
+        file = open(lexicon_path, "r")
+        for line in file:
+            split_line = line.split()
+            self.lexicon_dictionary[split_line[0]] = float(split_line[1])
+
+    def get_sentiments(self, word_list):
+        word_sentiment_list = []
+        for word in word_list:
+            cur_word = word[0]
+            normalized_word = cur_word.lower()
+            # If last character is not a letter ("Good!" to "good")
+            if(normalized_word[-1].isalpha() is False):
+                normalized_word = normalized_word[:-1]  # Strip last character
+
+            # If word is not in dictionary, change normalized_word to stemmed version (ie, "absurdly" to "absurd")
+            sentiment = self.lexicon_dictionary.get(normalized_word)
+            if(sentiment is None):
+                normalized_word = SnowballStemmer("english").stem(normalized_word)
+            sentiment = self.lexicon_dictionary.get(normalized_word)
+            if (sentiment is None):
+                sentiment = 0
+
+            word_sentiment = (cur_word , sentiment)
+            print(word_sentiment)
+            word_sentiment_list.append(word_sentiment)
+        return word_sentiment_list
+
+    def get_comment_sentiment(self, word_sentiment_list):
+        overall_sentiment = 0
+        nonzero_sentiment_word_count = 0
+        for entry in word_sentiment_list:
+            if (entry[1] is not 0):
+                overall_sentiment += entry[1]
+                nonzero_sentiment_word_count += 1
+        return (overall_sentiment/nonzero_sentiment_word_count)
+
+    def get_overall_comment_section_sentiment(self, comment_sentiment_list):
+        overall_sentiment = 0
+        comment_count = 0
+        for entry in comment_sentiment_list:
+            overall_sentiment += self.get_comment_sentiment(entry)
+            comment_count += 1
+        return (overall_sentiment/comment_count)

@@ -73,6 +73,8 @@ def identify_entity(sentence):
             taggedMentions.append(['Event', eventID, trigger, eventType, eventSubtype, genericity, modality, polarity, tense, arguments, person])
     return taggedMentions
 
+''' END UNTESTED ENTITIY TOOLS'''
+
 def get_all_entity_political_parties(self, entity_list):
     '''
     :param entityList: the list that is returned from identify_entity when passed an input String
@@ -131,66 +133,12 @@ def entity_to_political_party(entity, type='Person', previous_subject_titles=[])
             return title, found_party
     return 'No political figure', 'None found'
 
-''' END UNTESTED ENTITIY TOOLS'''
-
 # Load/generate requisite nltk files
 try:
     tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
 except LookupError:
     nltk.download('punkt')
     tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
-
-
-def page_title_to_political_party(title):
-    '''
-    :param wiki: a valid WikipediaPage object
-    :return: A string representing the political party or affiliation of the entity described in the wikipage, if
-            available. Otherwise, a string 'None' is returned.
-    '''
-    # Go through wikipedia json to get the id for wikidata
-    resp = requests.get(url='https://en.wikipedia.org/w/api.php?action=query&format=json&prop=pageprops&titles=' + title)
-    data = resp.json()
-    page_data = data['query']['pages'][list(data['query']['pages'].keys())[0]]
-    try:
-        page_properties = page_data['pageprops']
-        item_id = page_properties['wikibase_item']
-
-        # With item id in tow, extract political affiliation
-        client = Client()
-        entity = client.get(item_id, load=True)
-        try:
-            party_entity = entity.getlist(client.get('P102'))[0]
-            return str(party_entity.label)
-        except:
-            return 'None found'
-    except KeyError:
-        return 'None found'
-
-def entity_to_political_party(entity, type='Person', previous_subject_titles=[]):
-    '''
-    :param entity: String containing the name of the entity to be passed
-    :return: A tuple containing the name of the matching page and that page's affiliation
-    '''
-    pages = wikipedia.search(entity)
-    # With the exception of Morrissey and Madonna, people have two words in their names
-    if type =='Person':
-        page_titles = [p.split() for p in pages]
-        page_titles = [[w for w in title if '(' not in w] for title in page_titles]
-        page_titles = [' '.join(title) for title in page_titles if len(title) >= 2]
-    else:
-        sys.stderr.write("ERROR: Only person entity-type supported")
-        return None
-
-    # If any of the results have been previously discussed in the thread, those should be given priority
-    new_titles = [title for title in page_titles if title not in previous_subject_titles]
-    page_titles = previous_subject_titles + new_titles
-
-    # Iterate through these titles
-    for title in page_titles:
-        found_party = page_title_to_political_party(title)
-        if found_party != 'None found':
-            return title, found_party
-    return 'No political figure', 'None found'
 
 
 def political_party_to_value(party):
@@ -312,57 +260,9 @@ class Tagger(ChunkParserI):
         names = [' '.join([g[0] for g in group]) for group in groups[1:]]
         return names
 
-
-class SentimentClassifier():
-
-    def __init__(self, lexicon_path="sentiment_files/lexicon.tsv"):
-        self.lexicon_dictionary = {}
-        file = open(lexicon_path, "r")
-        for line in file:
-            split_line = line.split()
-            self.lexicon_dictionary[split_line[0]] = float(split_line[1])
-
-    def get_sentiments(self, word_list):
-        word_sentiment_list = []
-        for word in word_list:
-            cur_word = word[0]
-            normalized_word = cur_word.lower()
-            # If last character is not a letter ("Good!" to "good")
-            if(normalized_word[-1].isalpha() is False):
-                normalized_word = normalized_word[:-1]  # Strip last character
-
-            # If word is not in dictionary, change normalized_word to stemmed version (ie, "absurdly" to "absurd")
-            sentiment = self.lexicon_dictionary.get(normalized_word)
-            if(sentiment is None):
-                normalized_word = SnowballStemmer("english").stem(normalized_word)
-            sentiment = self.lexicon_dictionary.get(normalized_word)
-            if (sentiment is None):
-                sentiment = 0
-
-            word_sentiment = (cur_word , sentiment)
-            print(word_sentiment)
-            word_sentiment_list.append(word_sentiment)
-        return word_sentiment_list
-
-    def get_comment_sentiment(self, word_sentiment_list):
-        overall_sentiment = 0
-        nonzero_sentiment_word_count = 0
-        for entry in word_sentiment_list:
-            if (entry[1] is not 0):
-                overall_sentiment += entry[1]
-                nonzero_sentiment_word_count += 1
-        return (overall_sentiment/nonzero_sentiment_word_count)
-
-    def get_overall_comment_section_sentiment(self, comment_sentiment_list):
-        overall_sentiment = 0
-        comment_count = 0
-        for entry in comment_sentiment_list:
-            overall_sentiment += self.get_comment_sentiment(entry)
-            comment_count += 1
-        return (overall_sentiment/comment_count)
-
 # Just to be used in testing.
 if __name__ == '__main__':
+    '''
     test1 = "The food is delicious the what how to where bad beautiful excellent!".split()
     test2 = []
     for i in test1: test2.append([i])
@@ -388,3 +288,4 @@ if __name__ == '__main__':
     # print(tags)
     # relevant = tagger.get_nps(tags)
     # print(relevant)
+    '''
