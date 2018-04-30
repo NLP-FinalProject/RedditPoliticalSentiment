@@ -1,0 +1,2 @@
+model_checkpoint_path: "/home/ptero/PycharmProjects/DeepSentiment/model.tfl"
+all_model_checkpoint_paths: "/home/ptero/PycharmProjects/DeepSentiment/model.tfl"

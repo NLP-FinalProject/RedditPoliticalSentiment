@@ -14,13 +14,13 @@ class SentimentClassifier():
         self.load_sentiments(sentiment_file)
 
     def load_sentiments(self, sentiment_file):
-        '''
+        """
         :param sentiment_file: The file containing a list of the words used to assess sentiment.
         :return: A dictionary containing a link from each word to the Sentiment object. In the core of this assignment
                  only the polarity of this sentiment will be used, but we're linking to the whole object rather than
                  the sentiment exclusively since it allows some variations to be applied based on a variety of variables
                  at a later point, if desired.
-        '''
+        """
         if not os.path.isfile(sentiment_file):
             sys.stderr.write("ERROR: Sentiment file " + sentiment_file + " does not exist.")
             exit(1)
@@ -49,11 +49,11 @@ class SentimentClassifier():
             exit(2)
 
     def tally_word_sentiments(review, sentiment_dictionary):
-        '''
+        """
         The most basic sentiment analysis to meet the requirements of this small assignment.
         :param paragraph: String to be reviewed.
         :return: A tuple containing the number of positive classified words, number of negative classified words, and total.
-        '''
+        """
         # In this simple version, we don't care about the different sentences or anything, so just make a list of words.
         words = review.split(' ')
 

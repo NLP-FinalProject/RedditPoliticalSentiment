@@ -3,19 +3,18 @@ from app import app
 from app.forms import UrlSearchForm
 
 import sys, os
-sys.path.append(os.path.abspath('../utilities'))
-import reddit_toolkit as rt
-from political_tools import Tagger
+sys.path.append(os.path.abspath('../'))
+from utilities.flask_interface import Interface
 
-# Due to the time required to train the tagger, it's better to have one
-tagger = Tagger(test=False)
+interface = Interface(abs_path=os.path.abspath('../utilities') + '/')
 
-@app.route('/', methods=['GET','POST'])
+@app.route('/', methods=['GET', 'POST'])
 def search():
     search = UrlSearchForm()
     if request.method == 'POST':
         return find_results(search)
     return render_template('index.html', title='Home', form=search)
+
 
 @app.route('/results')
 def find_results(url):
@@ -23,7 +22,7 @@ def find_results(url):
     # Keep it from checking junk or empty strings, which can occasionally
     # return results for some reason.
     if 'http' in url_string:
-        results = rt.flask_packaging(url_string, tagger)
+        results = interface.flask_packaging(url_string)
     else:
         results = {}
     return render_template('results.html', results=results, url=url_string)
