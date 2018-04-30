@@ -20,22 +20,23 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Load/generate requisite nltk files
-'''
+
+
+# Load/generate requisite nltk files
 try:
     tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
 except LookupError:
     nltk.download('punkt')
     tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
-'''
 
-''' ADDTIONAL ENTITY TOOLS WITH THE PROF API, NOT TESTED OR INTEGRATED'''
+""" ADDTIONAL ENTITY TOOLS WITH THE PROF API, NOT TESTED OR INTEGRATED"""
 
 
 def identify_entity(sentence):
-    '''
+    """
     :param sentence:
     :return: A list of entities and events in the order they appear in the sentence
-    '''
+    """
     serviceurl = 'https://blender04.cs.rpi.edu/~jih/cgi-bin/ere.py'
     payload = {'textcontent': sentence}
     # verify=False makes it so a HTTPS certificate is not required for the request
@@ -73,24 +74,26 @@ def identify_entity(sentence):
             taggedMentions.append(['Event', eventID, trigger, eventType, eventSubtype, genericity, modality, polarity, tense, arguments, person])
     return taggedMentions
 
-''' END UNTESTED ENTITIY TOOLS'''
+""" END UNTESTED ENTITIY TOOLS"""
+
 
 def get_all_entity_political_parties(self, entity_list):
-    '''
+    """
     :param entityList: the list that is returned from identify_entity when passed an input String
     :return: a list of tuples containing the normalized name for the entity and their party
-    '''
+    """
     entity_party_list = []
     for e in entity_list:
         entity_party_list.append(entity_to_political_party(e[2]))
     return entity_party_list
 
+
 def page_title_to_political_party(title):
-    '''
+    """
     :param wiki: a valid WikipediaPage object
     :return: A string representing the political party or affiliation of the entity described in the wikipage, if
             available. Otherwise, a string 'None' is returned.
-    '''
+    """
     # Go through wikipedia json to get the id for wikidata
     resp = requests.get(url='https://en.wikipedia.org/w/api.php?action=query&format=json&prop=pageprops&titles=' + title)
     data = resp.json()
@@ -107,11 +110,12 @@ def page_title_to_political_party(title):
     except:
         return 'None found'
 
+
 def entity_to_political_party(entity, type='Person', previous_subject_titles=[]):
-    '''
+    """
     :param entity: String containing the name of the entity to be passed
     :return: A tuple containing the name of the matching page and that page's affiliation
-    '''
+    """
     pages = wikipedia.search(entity)
     # With the exception of Morrissey and Madonna, people have two words in their names
     if type =='Person':
@@ -133,19 +137,12 @@ def entity_to_political_party(entity, type='Person', previous_subject_titles=[])
             return title, found_party
     return 'No political figure', 'None found'
 
-# Load/generate requisite nltk files
-try:
-    tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
-except LookupError:
-    nltk.download('punkt')
-    tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
-
 
 def political_party_to_value(party):
-    '''
+    """
     :param party: A string representing the name of a political party
     :return: A value [-1.0, 1.0] representing this affiliation.
-    '''
+    """
     # TODO: More nuanced approach, use wikipedia API rather than fixed values
     if 'republican' in party.lowercase():
         return 1
@@ -213,23 +210,32 @@ class Tagger(ChunkParserI):
                 **kwargs)
 
             # TODO: Find way to save classifier
-            '''
+            """
             with open('cached_data/tagger.p', 'wb') as output:
                 pickle.dump(self.tagger, output, pickle.HIGHEST_PROTOCOL)
         else:
             with open('cached_data/tagger.p', 'rb') as input:
                 self.tagger = pickle.load(input)
-            '''
+            """
         if test:
             test_data = data[int(.1*len(list(data))):]
             print(self.evaluate(test_data))
 
-    def parse(self, tagged_sent):
-        chunks = self.tagger.tag(tagged_sent)
+    def parse(self, sentence):
+        """
+        Processes a sentence, returning larger chunks.
+        :param sentence: String to be analyzed
+        :return: A list of tuples containing a word, it's tag, and its broader chunk.
+        """
+        chunks = self.tagger.tag(self.preprocess(sentence))
         chunks = conlltags2tree([(w, t, c) for ((w, t), c) in chunks])
         return chunks
 
     def preprocess(self, comment):
+        """
+        :param comment: A string
+        :return: A list of pos_tagged sentences.
+        """
         # Break into individual sentences.
         sentences = [nltk.tokenize.word_tokenize(sentence) for sentence in tokenizer.tokenize(comment)]
         # Apply basic POS tagging.
@@ -245,6 +251,11 @@ class Tagger(ChunkParserI):
         return tree2conlltags(tree)
 
     def get_nps(self, tags):
+        """
+        From the parsed tags, returns just the noun phrases, for possible entity linking.
+        :param tags: A list containing tuples of word, tag, and chunk
+        :return: A list of strings of the proper nouns
+        """
         relevant_tags = [(t, i) for i, t in enumerate(tags) if 'NP' in t[2] and 'NNP' == t[1]]
         groups = []
         group = []
@@ -259,33 +270,3 @@ class Tagger(ChunkParserI):
                 last = i
         names = [' '.join([g[0] for g in group]) for group in groups[1:]]
         return names
-
-# Just to be used in testing.
-if __name__ == '__main__':
-    '''
-    test1 = "The food is delicious the what how to where bad beautiful excellent!".split()
-    test2 = []
-    for i in test1: test2.append([i])
-    example1 = "What absurdful news.".split()
-    example2 = []
-    for i in example1: example2.append([i])
-
-    temp = SentimentClassifier()
-    ayy1 = temp.get_sentiments(test2)
-    print(ayy1)
-    print("Overall sentiment of this comment is " + str(temp.get_comment_sentiment(ayy1)) + "\n")
-
-    ayy2 = temp.get_sentiments(example2)
-    print(ayy2)
-    print("Overall sentiment of this comment is " + str(temp.get_comment_sentiment(ayy2)))
-
-    print("\nOverall sentiment for the comment section is " + str(temp.get_overall_comment_section_sentiment([ayy1, ayy2])))
-
-    # print("Stating example stage . . .")
-    # comment = "Donald Trump has just been revealed to have eaten 100 cats whole."
-    # tagger = Tagger(test=False)
-    # tags = tagger.parse(tagger.preprocess(comment)[0])
-    # print(tags)
-    # relevant = tagger.get_nps(tags)
-    # print(relevant)
-    '''

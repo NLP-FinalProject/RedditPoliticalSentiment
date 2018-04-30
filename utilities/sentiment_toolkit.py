@@ -4,14 +4,16 @@ from nltk.tokenize import RegexpTokenizer
 from keras.datasets import imdb
 from tflearn.data_utils import to_categorical, pad_sequences
 
+import tensorflow as tf
 import tflearn
+import os
 
+# Load requisite datasets.
 try:
     stop_words = set(stopwords.words('english'))
 except LookupError:
     nltk.download('stopwords')
     stop_words = set(stopwords.words('english'))
-
 
 class SentimentClassifier(object):
     def __init__(self, *, load_path=None, save_path='sentiment_files/model.tfl'):
@@ -24,15 +26,16 @@ class SentimentClassifier(object):
         self.tokenizer = RegexpTokenizer(r'\w+')
 
         if load_path is None:
-            self.train_model(save_path)
+            self.__train_model(save_path)
         else:
-            self.load_model(load_path)
+            self.__load_model(load_path)
 
-    def train_model(self, save_path):
+    def __train_model(self, save_path):
         '''
         :param save_path: Path to save the model to
         :return: None
         '''
+        tf.reset_default_graph()
         train, test = imdb.load_data(num_words=10000, index_from=3)
 
         train_x, train_y = train
@@ -56,7 +59,7 @@ class SentimentClassifier(object):
         self.model.fit(train_x, train_y, validation_set=(test_x, test_y), show_metric=True, batch_size=32)
         self.model.save(save_path)
 
-    def load_model(self, filename):
+    def __load_model(self, filename):
         '''
         :param filename: .tfl file to be loaded.
         :return: None
@@ -77,7 +80,6 @@ class SentimentClassifier(object):
         :return: List or value, see above
         '''
         words = self.tokenizer.tokenize(text)
-        words = [word.lower() for word in words if word not in stop_words]
         vector = self.words_to_vector(words)
         vector = pad_sequences([vector], maxlen=100, value=0.)
         probs = self.model.predict(vector)[0].tolist()
@@ -89,6 +91,18 @@ class SentimentClassifier(object):
                 return 0
             else:
                 return 2*probs.index(max(probs))-1
+
+    def check_conversion(self, text):
+        """
+        TODO: REMOVE BEFORE FINAL RELEASE
+        This is a function used just to check that the conversion of words to vectors is being done correctly.
+        :param text: Text to be evaluated
+        :return: A string representing the conversion of this text to tokens, tokens to vector, and vector back to text.
+        """
+        words = self.tokenizer.tokenize(text)
+        vector = self.words_to_vector(words)
+        vector = pad_sequences([vector], maxlen=100, value=0.)
+        return self.vector_to_words(vector)
 
     def vector_to_words(self, vector):
         '''

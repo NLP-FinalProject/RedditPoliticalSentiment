@@ -1,9 +1,7 @@
-from api_keys import *
+from ..api_keys import *
 
-import reddit_toolkit as rt
 import os
 import sys
-import pickle
 import praw
 import random
 
