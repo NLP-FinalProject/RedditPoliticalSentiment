@@ -1,5 +1,3 @@
-# Collection of tools for interacting with reddit's API
-
 import praw
 
 class RedditExplorer(object):

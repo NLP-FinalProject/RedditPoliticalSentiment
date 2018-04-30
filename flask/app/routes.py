@@ -3,9 +3,10 @@ from app import app
 from app.forms import UrlSearchForm
 
 import sys, os
-sys.path.append(os.path.abspath('../utilities'))
-from flask_facade import Facade
+sys.path.append(os.path.abspath('../'))
+from utilities.flask_interface import Interface
 
+interface = Interface(abs_path=os.path.abspath('../utilities') + '/')
 
 @app.route('/', methods=['GET', 'POST'])
 def search():
@@ -21,7 +22,7 @@ def find_results(url):
     # Keep it from checking junk or empty strings, which can occasionally
     # return results for some reason.
     if 'http' in url_string:
-        results = rt.flask_packaging(url_string)
+        results = interface.flask_packaging(url_string)
     else:
         results = {}
     return render_template('results.html', results=results, url=url_string)

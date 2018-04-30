@@ -1,7 +1,8 @@
-from utilities.reddit_toolkit import RedditExplorer
 from utilities.api_keys import *
+from utilities.reddit_toolkit import RedditExplorer
+from utilities.sentiment_toolkit import SentimentClassifier
 
-import utilities.entity_tools as et
+import utilities.entity_toolkit as et
 import utilities.sentiment_toolkit as st
 import praw
 
@@ -9,9 +10,10 @@ import praw
 # Interface between flask and the core of this project.
 
 class Interface(object):
-    def __init__(self):
-        self.rt = RedditExplorer()
+    def __init__(self, abs_path=""):
+        self.rt = RedditExplorer(client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
         self.tagger = et.Tagger()
+        self.sentiment = SentimentClassifier(load_path=abs_path + 'sentiment_files/model.tfl')
 
     def flask_packaging(self, *, url, number=5, num_top_com=3):
         """
@@ -29,13 +31,13 @@ class Interface(object):
             """
             pass
 
+        # Process the number of discussions described above
         discussions = []
         submissions = self.rt.discussions_of_url(url)
         for submission in submissions[:number]:
             sub = self.rt.parse_submission_info(submission, num_top_comments=num_top_com)
 
             top_comments_processed = []
-
             for comment in sub['top_comments']:
                 comm = {}
                 comm['words'] = comment.body.split(' ')
@@ -45,10 +47,10 @@ class Interface(object):
                 comm['l_words'] = set([])
 
                 nps = []
-                for tagged_sentence in tagger.preprocess(comment.body):
-                    fully_tagged = tagger.convert(tagger.parse(tagged_sentence))
-                    nps += tagger.get_nps(fully_tagged)
-                affiliations = [pt.entity_to_political_party(np) for np in nps]
+                for tagged_sentence in self.tagger.preprocess(comment.body):
+                    fully_tagged = self.tagger.convert(tagger.parse(tagged_sentence))
+                    nps += self.tagger.get_nps(fully_tagged)
+                affiliations = [et.entity_to_political_party(np) for np in nps]
                 for name, party in affiliations:
                     if 'Republican' in party:
                         for word in name.split(' '):

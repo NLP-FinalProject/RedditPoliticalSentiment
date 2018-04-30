@@ -101,8 +101,7 @@ class SentimentClassifier(object):
         """
         words = self.tokenizer.tokenize(text)
         vector = self.words_to_vector(words)
-        vector = pad_sequences([vector], maxlen=100, value=0.)
-        return self.vector_to_words(vector)
+        return vector, self.vector_to_words(vector)
 
     def vector_to_words(self, vector):
         '''
@@ -116,11 +115,20 @@ class SentimentClassifier(object):
         :param words: A string containing, presumably, multiple words.
         :return: A list of integers starting with 0.
         '''
-        vector = [0] + [self.word_to_id[word] if word in self.word_to_id else 2 for word in words]
+        words[0] = words[0].lower()
+        words = [word for word in words if word.lower() not in stop_words]
+        vector = [1] + [self.word_to_id[word] if word in self.word_to_id else 2 for word in words]
         return vector
 
 
 if __name__ == '__main__':
     classifier = SentimentClassifier(load_path='sentiment_files/model.tfl')
+    print("Testing positive response.")
     print(classifier.predict("I love tflearn more than anything! I want to use it every day!"))
     print(classifier.predict("I think that tflearn is the worst thing I have ever seen."))
+
+    test_phrase = "I heard on the news today that the president Trump is responsible for the destruction of Hawaii."
+    print("Testing phrase vectorization")
+    vector, conv = classifier.check_conversion(test_phrase)
+    print("Generated vector: " + str(vector))
+    print("Coverted to plaintext: " + conv)
