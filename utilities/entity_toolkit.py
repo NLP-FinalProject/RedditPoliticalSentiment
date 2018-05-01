@@ -56,23 +56,26 @@ class EntityLinker():
 
     def load_json(self, path='entity_files/dict.json'):
         """
-        :param json_dict:
         :action: Saves dictionary to json file
+        :param json_dict:
+        :return: None
         """
         self.ent_dict = json.load(open(path))
 
     def save_json(self, path='entity_files/dict.json'):
         """
-        :param json_dict:
         :action: Loads json file into dictionary
+        :param json_dict:
+        :return: None
         """
         with open(path, 'w') as outfile:
             json.dump(self.ent_dict, outfile)
 
     def pretty_print_json(self, json_dict):
         """
-        :param json_dict:
         :action: Pretty prints json to console
+        :param json_dict:
+        :return: None
         """
         print(json.dumps(json_dict, indent=4, sort_keys=True))
 
@@ -128,7 +131,7 @@ class EntityLinker():
         """
         entity_party_list = []
         for e in entity_list:
-            entity_party_list.append(entity_to_political_party(e[2]))
+            entity_party_list.append(self.entity_to_political_party(e[2]))
         return entity_party_list
 
 
@@ -155,7 +158,7 @@ class EntityLinker():
             return 'None found'
 
 
-    def entity_to_political_party(entity, type='Person', previous_subject_titles=[]):
+    def entity_to_political_party(self, entity, type='Person', previous_subject_titles=[]):
         """
         :param entity: String containing the name of the entity to be passed
         :return: A tuple containing the name of the matching page and that page's affiliation
@@ -176,7 +179,7 @@ class EntityLinker():
 
         # Iterate through these titles
         for title in page_titles:
-            found_party = page_title_to_political_party(title)
+            found_party = self.page_title_to_political_party(title)
             if found_party != 'None found':
                 return title, found_party
         return 'No political figure', 'None found'
