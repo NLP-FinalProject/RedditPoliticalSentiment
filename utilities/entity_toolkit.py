@@ -57,7 +57,7 @@ class EntityLinker():
     def load_json(self, path='entity_files/dict.json'):
         """
         :action: Saves dictionary to json file
-        :param json_dict:
+        :param path:
         :return: None
         """
         self.ent_dict = json.load(open(path))
@@ -65,7 +65,7 @@ class EntityLinker():
     def save_json(self, path='entity_files/dict.json'):
         """
         :action: Loads json file into dictionary
-        :param json_dict:
+        :param path:
         :return: None
         """
         with open(path, 'w') as outfile:
@@ -79,7 +79,7 @@ class EntityLinker():
         """
         print(json.dumps(json_dict, indent=4, sort_keys=True))
 
-    def identify_entity(sentence):
+    def identify_entity(self, sentence):
         """
         :param sentence:
         :return: A list of entities and events in the order they appear in the sentence
@@ -135,7 +135,7 @@ class EntityLinker():
         return entity_party_list
 
 
-    def page_title_to_political_party(title):
+    def page_title_to_political_party(self, title):
         """
         :param wiki: a valid WikipediaPage object
         :return: A string representing the political party or affiliation of the entity described in the wikipage, if
@@ -163,6 +163,10 @@ class EntityLinker():
         :param entity: String containing the name of the entity to be passed
         :return: A tuple containing the name of the matching page and that page's affiliation
         """
+        # If already in dictionary, return dict entry instead of looking on Wikipedia
+        if entity in self.ent_dict:
+            return entity, self.ent_dict[entity]
+
         pages = wikipedia.search(entity)
         # With the exception of Morrissey and Madonna, people have two words in their names
         if type =='Person':
@@ -181,10 +185,12 @@ class EntityLinker():
         for title in page_titles:
             found_party = self.page_title_to_political_party(title)
             if found_party != 'None found':
+                self.ent_dict[entity] = found_party
+                self.save_json()
                 return title, found_party
         return 'No political figure', 'None found'
 
-    def political_party_to_value(party):
+    def political_party_to_value(self, party):
         """
         :param party: A string representing the name of a political party
         :return: A value [-1.0, 1.0] representing this affiliation.
@@ -316,8 +322,3 @@ class Tagger(ChunkParserI):
                 last = i
         names = [' '.join([g[0] for g in group]) for group in groups[1:]]
         return names
-
-dankMeme = EntityLinker()
-
-
-print("\nCompleted")
