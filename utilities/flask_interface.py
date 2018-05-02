@@ -14,6 +14,7 @@ class Interface(object):
         self.rt = RedditExplorer(client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
         self.tagger = et.Tagger()
         self.sentiment = SentimentClassifier(load_path=abs_path + 'sentiment_files/model.tfl')
+        self.ent_linker = et.EntityLinker()
 
     def flask_packaging(self, *, url, number=5, num_top_com=3):
         """
@@ -35,22 +36,23 @@ class Interface(object):
         discussions = []
         submissions = self.rt.discussions_of_url(url)
         for submission in submissions[:number]:
-            sub = self.rt.parse_submission_info(submission, num_top_comments=num_top_com)
+            sub = self.rt.parse_submission_info(submission)
+            sub['top_comments'] = {}
 
-            top_comments_processed = []
-            for comment in sub['top_comments']:
-                comm = {}
-                comm['words'] = comment.body.split(' ')
-                comm['score'] = comment.score
-                comm['url'] = comment.permalink
-                comm['r_words'] = set([])
-                comm['l_words'] = set([])
+            for comment in self.rt.top_comments(submission, num_top_com):
+                comm = {
+                        'words': comment.body.split(' '),
+                        'score': comment.score,
+                        'url': comment.permalink,
+                        'r_words': set([]),
+                        'l_words': set([]),
+                        }
 
                 nps = []
                 for tagged_sentence in self.tagger.preprocess(comment.body):
-                    fully_tagged = self.tagger.convert(tagger.parse(tagged_sentence))
+                    fully_tagged = self.tagger.convert(self.tagger.parse(tagged_sentence))
                     nps += self.tagger.get_nps(fully_tagged)
-                affiliations = [et.entity_to_political_party(np) for np in nps]
+                affiliations = [self.ent_linker.entity_to_political_party(np) for np in nps]
                 for name, party in affiliations:
                     if 'Republican' in party:
                         for word in name.split(' '):
@@ -59,10 +61,9 @@ class Interface(object):
                         for word in name.split(' '):
                             comm['l_words'].add(word)
 
-                # Todo link to sentiment analysis
+                # TODO: Sentence-wise sentiment analysis on comment.
+                sub['top_comments'].append(comm)
 
-                top_comments_processed.append(comm)
-            sub['top_comments'] = top_comments_processed
             discussions.append(sub)
 
         return discussions

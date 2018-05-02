@@ -33,8 +33,7 @@ except LookupError:
     """ ADDTIONAL ENTITY TOOLS WITH THE PROF API, NOT TESTED OR INTEGRATED"""
 
 
-class EntityLinker():
-
+class EntityLinker(object):
     def __init__(self, *, path='entity_files/dict.json'):
         self.path = path
 
@@ -60,7 +59,7 @@ class EntityLinker():
         :param path:
         :return: None
         """
-        self.ent_dict = json.load(open(path))
+        self.ent_dict = dict(json.load(open(path)))
 
     def save_json(self, path='entity_files/dict.json'):
         """
@@ -71,13 +70,13 @@ class EntityLinker():
         with open(path, 'w') as outfile:
             json.dump(self.ent_dict, outfile)
 
-    def pretty_print_json(self, json_dict):
+    def pretty_print_json(self, ent_dict):
         """
-        :action: Pretty prints json to console
-        :param json_dict:
+        :action: Pretty prints dictionary to console
+        :param ent_dict: Diciontary containing previously affiliated entities
         :return: None
         """
-        print(json.dumps(json_dict, indent=4, sort_keys=True))
+        print(json.dumps(ent_dict, indent=4, sort_keys=True))
 
     def identify_entity(self, sentence):
         """
@@ -300,6 +299,14 @@ class Tagger(ChunkParserI):
         return tagged_sentences
 
     def convert(self, tree):
+        """
+        Return a list of 3-tuples containing ``(word, tag, IOB-tag)``.
+        Convert a tree to the CoNLL IOB tag format.
+
+        :param tree: The tree to be converted.
+        :type tree: Tree
+        :rtype: list(tuple)
+        """
         return tree2conlltags(tree)
 
     def get_nps(self, tags):
