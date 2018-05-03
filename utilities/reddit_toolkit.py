@@ -11,7 +11,8 @@ class RedditExplorer(object):
         :param url: A string url pointing to a news article
         :return: A listing generator which returns submissions.
         """
-        return self.reddit.subreddit('all').search('url:' + url)
+        submissions = self.reddit.subreddit('all').search('url:' + url)
+        return list(submissions)
 
 
     def parse_submission_info(self, submission):
@@ -30,9 +31,14 @@ class RedditExplorer(object):
         sub['comments'] = submission.comments
         return sub
 
-    def top_comments(self, comments, num_top_comments):
-        return [comment for comment in list(comments)[:num_top_comments + 1]
-                    if comment.author is not None and comment.author.name != 'AutoModerator'][:num_top_comments]
+    def top_comments(self, comments, num_top_comments=3):
+        top_comments = []
+        for comment in comments:
+            if comment.author is not None and comment.author.name != 'AutoModerator':
+                top_comments.append(comment)
+            if len(top_comments) > num_top_comments:
+                break
+        return top_comments
 
     def all_comments_to_list(self, submission_comments, *, relevance_threshold=10, min_length=100):
         """

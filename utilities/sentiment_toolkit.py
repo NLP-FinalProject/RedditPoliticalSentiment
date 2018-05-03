@@ -56,7 +56,7 @@ class SentimentClassifier(object):
         test_y = to_categorical(test_y, nb_classes=2)
 
         # Training
-        self.model.fit(train_x, train_y, n_epoch=1, validation_set=(test_x, test_y), show_metric=True, batch_size=32)
+        self.model.fit(train_x, train_y, n_epoch=5, validation_set=(test_x, test_y), show_metric=True, batch_size=32)
         self.model.save(save_path)
 
     def _load_model(self, load_path):
@@ -117,11 +117,10 @@ class SentimentClassifier(object):
 
 if __name__ == '__main__':
     # If run individually, we build the classifier.
-    classifier = SentimentClassifier(load_path='trained_models/model.tfl')
+    classifier = SentimentClassifier(save_path='trained_models/model.tfl')
     print("Testing positive response.")
     print(classifier.predict("I love tflearn more than anything! I want to use it every day!"))
     print(classifier.predict("I think that tflearn is the worst thing I have ever seen."))
-
     test_phrase = "I heard on the news today that the president Trump is responsible for the destruction of Hawaii."
     print("Testing phrase vectorization")
     vector, conv = classifier.check_conversion(test_phrase)

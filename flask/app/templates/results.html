@@ -60,9 +60,9 @@
                 {% for comment in result.top_comments %}
                     <div class="comment-block">
                         {% for word in comment.words %}
-                            {% if word in comment.r_words %}
+                            {% if word.lower() in comment.r_words %}
                                 <span class="red"> {{word}} </span>
-                            {% elif word in comment.l_words %}
+                            {% elif word.lower() in comment.l_words %}
                                 <span class="blue"> {{word}}</span>
                             {% else %}
                                 {{word}}
