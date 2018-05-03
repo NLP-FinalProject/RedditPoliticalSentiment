@@ -145,7 +145,6 @@ class EntityLinker(object):
         # With item id in tow, extract political affiliation
         client = Client()
         entity = client.get(item_id, load=True)
-        print(item_id)
         try:
             party_entity = entity.getlist(client.get('P102'))[0]
             return str(party_entity.label)

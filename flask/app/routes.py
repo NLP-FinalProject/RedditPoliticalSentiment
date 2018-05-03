@@ -22,7 +22,8 @@ def find_results(url):
     # Keep it from checking junk or empty strings, which can occasionally
     # return results for some reason.
     if 'http' in url_string:
-        results = interface.flask_packaging(url=url_string, max_number=1)
+        results = interface.flask_packaging(url=url_string, max_number=5)
     else:
         results = {}
+    results = [r for r in results if r['comment_count'] > 0]
     return render_template('results.html', results=results, url=url_string)
