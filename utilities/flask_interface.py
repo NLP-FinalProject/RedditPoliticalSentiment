@@ -63,9 +63,6 @@ class Interface(object):
         for submission in submissions[:max_number]:
             sub = self.rt.parse_submission_info(submission)
             sub['top_comments'] = []
-
-
-
             for comment in self.rt.top_comments(submission.comments, num_top_com):
                 comm = {
                         'words': comment.body.split(' '),
@@ -73,18 +70,21 @@ class Interface(object):
                         'url': comment.permalink,
                         'r_words': set([]),
                         'l_words': set([]),
+                        'sentiment': self.sentiment.predict(comment.body)
                         }
                 nps = self.ent_linker.get_continuous_chunks(comment.body)[:-1]
-                affiliations = [self.ent_linker.entity_to_political_party(np) for np in nps if
+                affiliations = [(np, self.ent_linker.entity_to_political_party(np)) for np in nps if
                                 self.ent_linker.entity_to_political_party(np) is not None]
 
-                for affiliation in affiliations:
+                for np, affiliation in affiliations:
                     if "Republican Party" == affiliation[1]:
                         for word in affiliation[0].lower().split(' '):
                             comm['r_words'].add(word.lower())
+                        comm['r_words'].add(np.lower())
                     if "Democratic Party" == affiliation[1]:
                         for word in affiliation[0].lower().split(' '):
                             comm['l_words'].add(word.lower())
+                        comm['l_words'].add(np.lower())
                 sub['top_comments'].append(comm)
 
             # We limit the number of response comments for the sake of reducing computational complexity.
@@ -96,8 +96,14 @@ class Interface(object):
                     sub['l_percentage'] += abs(mod)
 
             total = (sub['r_percentage']+sub['l_percentage'])
-            sub['r_percentage'] = sub['r_percentage']/total*100
-            sub['l_percentage'] = sub['l_percentage']/total*100
+            try:
+                sub['r_percentage'] = sub['r_percentage']/total*100
+                sub['l_percentage'] = sub['l_percentage']/total*100
+            except ZeroDivisionError:
+                sub['r_percentage'] = 0
+                sub['l_percentage'] = 0
 
             discussions.append(sub)
+            print(len(discussions))
+
         return discussions

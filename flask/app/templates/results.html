@@ -45,15 +45,15 @@
                     {% endif %}
                 </a> </h4>
             <h4 class="title"> {{ result.title }}</h4>
-            <div class="skillbar clearfix " data-percent="{{ result.l_percentage }}%">
-                <div class="skillbar-title" style="background: #2980b9;"><span>Pro-Democrat </div>
+            <div class="skillbar clearfix " data-percent="{{ result.l_percentage|round }}%">
+                <div class="skillbar-title" style="background: #2980b9;"><span>Pro-Democrat</span> </div>
                 <div class="skillbar-bar" style="background: #3498db;"></div>
-                <div class="skill-bar-percent">{{ result.l_percentage }}%</div>
+                <div class="skill-bar-percent">{{ result.l_percentage|round }}%</div>
             </div> <!-- End Skill Bar -->
-            <div class="skillbar clearfix" data-percent="{{ result.r_percentage }}%">
-                <div class="skillbar-title" style="background: #7d0004;"><span>Pro-Republican </div>
+            <div class="skillbar clearfix" data-percent="{{ result.r_percentage|round }}%">
+                <div class="skillbar-title" style="background: #7d0004;"><span>Pro-Republican </span></div>
                 <div class="skillbar-bar" style="background: #cd0007;"></div>
-                <div class="skill-bar-percent">{{ result.r_percentage }}%</div>
+                <div class="skill-bar-percent">{{ result.r_percentage|round }}%</div>
             </div> <!-- End Skill Bar -->
 
                 <p>Top commments:</p>
@@ -69,10 +69,18 @@
                             {% endif %}
                         {% endfor %}
                     <br>
-                    {% if comment.score != 1 %}:
-                        <a class="comments" href="comment.url"> {{comment.score}} points</a>
+                    {% if comment.score != 1 %}
+                        <a class="comments" href="https://reddit.com{{ comment.url }}"> {{comment.score}} points</a>
                     {% else %}
-                        <a class="comments" href="comment.url"> Score Hidden </a>
+                        <a class="comments" href="https://reddit.com{{ comment.url }}"> Score Hidden </a>
+                    {% endif %}
+
+                    {% if comment.sentiment < 0 %}
+                        <span style="color:red;font-weight: bold;font-size:11px;">Negative Comment</span>
+                    {% elif comment.sentiment > 0 %}
+                        <span style="color:green;font-weight: bold;font-size:11px;">Positive Comment</span>
+                    {% else %}
+                        <span style="color:blue;font-weight: bold;font-size:11px;">Unsure Sentiment</span>
                     {% endif %}
                     </div>
                 {% endfor %}
