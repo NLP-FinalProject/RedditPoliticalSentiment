@@ -15,6 +15,3 @@ figures = ['Obama', 'Trump', 'Lincoln', 'Stein', 'Hitler', 'Potolsky']
 for figure in figures:
     result = et.entity_to_political_party(figure)
     print(figure + ' -> ' + result[0] + ': ' + result[1])
-
-
-rt.discussions_of_article('http://www.newsweek.com/mike-pences-hometown-throwing-gay-pride-festival-so-everyone-knows-they-dont-864086')

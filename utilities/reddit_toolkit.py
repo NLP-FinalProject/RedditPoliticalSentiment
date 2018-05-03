@@ -11,9 +11,11 @@ class RedditExplorer(object):
         :param url: A string url pointing to a news article
         :return: A listing generator which returns submissions.
         """
-        return self.reddit.subreddit('all').search('url:' + url)
+        submissions = self.reddit.subreddit('all').search('url:' + url)
+        return list(submissions)
 
-    def parse_submission_info(self, submission, num_top_comments):
+
+    def parse_submission_info(self, submission):
         """
         Parse the relevant details of a submission into a subionary, to avoid unnecessary details.
         :param submission: A :class:`~.Submission` object
@@ -26,10 +28,38 @@ class RedditExplorer(object):
         sub['score'] = submission.score
         sub['url'] = 'https://reddit.com' + submission.permalink
         sub['comment_count'] = submission.num_comments
-        sub['comments'] = submission.comments
-
-        # Sometimes the top post is a sticky or mod post, which should be ignored.
-        sub['top_comments'] = [comment for comment in sub['comments'][:num_top_comments+1]
-                        if comment.author is not None and comment.author.name != 'AutoModerator']
-
+        sub['r_percentage'] = 0.00
+        sub['l_percentage'] = 0.00
         return sub
+
+    def top_comments(self, comments, num_top_comments=3):
+        top_comments = []
+        for comment in comments:
+            if comment.author is not None and comment.author.name != 'AutoModerator':
+                top_comments.append(comment)
+            if len(top_comments) > num_top_comments:
+                break
+        return top_comments
+
+    def all_comments_to_list(self, submission_comments, *, relevance_threshold=10, min_length=100,
+                             max_num_comments=100):
+        """
+        Traverses the comment tree returning a list containing all comments and their scores.
+
+        :param submission_comments: A submission.comments object, a list of all top-level submissions
+        :param relevance_threshold: The minimum absolute value of the score of a counted comment
+        :param min_length: The minimum length of a comment, as sentiment analysis is less precise on shorter statements.
+        :return: A list of all comments and their scores meeting the threshold remands.
+        :rtype: list[(str, int)]
+
+        # TODO: This does not retrieve all comments on very large threads. Does this matter?
+
+        """
+        all_comments = submission_comments.list()
+        key_comments = [(comment.body, comment.score) for comment in all_comments if
+                        not isinstance(comment, praw.models.reddit.more.MoreComments)
+                        and comment.author is not None
+                        and comment.author.name != 'AutoModerator'
+                        and abs(comment.score) > relevance_threshold
+                        and len(comment.body) > min_length][:max_num_comments]
+        return key_comments

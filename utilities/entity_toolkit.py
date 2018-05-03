@@ -1,18 +1,13 @@
 # Collection of the frequently called functions we'll be using for entity linking
 
-from nltk import ChunkParserI, ClassifierBasedTagger
-from nltk.chunk import conlltags2tree, tree2conlltags
-from nltk.corpus import conll2000
-from nltk.stem.snowball import SnowballStemmer
+from bs4 import BeautifulSoup
+from nltk import ne_chunk, pos_tag, word_tokenize
+from nltk.tree import Tree
 from wikidata.client import Client
 
-from bs4 import BeautifulSoup
-import nltk
-import nltk.data
 import nltk.tokenize
 import os
 import re
-import random
 import requests
 import sys
 import wikipedia
@@ -20,8 +15,8 @@ import urllib3
 import json
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-# Load/generate requisite nltk files
-
+from nltk.tag import StanfordNERTagger
+from nltk.tokenize import word_tokenize
 
 # Load/generate requisite nltk files
 try:
@@ -30,54 +25,45 @@ except LookupError:
     nltk.download('punkt')
     tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
 
-    """ ADDTIONAL ENTITY TOOLS WITH THE PROF API, NOT TESTED OR INTEGRATED"""
 
-
-class EntityLinker():
-
-    def __init__(self, *, path='entity_files/dict.json'):
+class EntityLinker(object):
+    def __init__(self, *, path='saved_data/entity_files/dict.json'):
         self.path = path
 
         # If file exists
         if os.path.isfile(path):
             # Load json file into dictionary
-            self.load_json(path)
-
-        # If parent folder exists
-        elif os.path.isdir((os.path.dirname(path))):
+            self.load_dictionary()
+        else:
             self.ent_dict = {}
             # Save dictionary to json file
-            self.save_json(path)
+            self.save_dictionary()
 
-        # If parent folder doesn't exist
-        else:
-            sys.stderr.write("ERROR: PATH '" + path + "' NOT FOUND")
-            exit()
-
-    def load_json(self, path='entity_files/dict.json'):
+    def load_dictionary(self):
         """
         :action: Saves dictionary to json file
-        :param path:
         :return: None
         """
-        self.ent_dict = json.load(open(path))
+        self.ent_dict = dict(json.load(open(self.path)))
 
-    def save_json(self, path='entity_files/dict.json'):
+    def save_dictionary(self):
         """
         :action: Loads json file into dictionary
-        :param path:
         :return: None
         """
-        with open(path, 'w') as outfile:
+        with open(self.path, 'w') as outfile:
             json.dump(self.ent_dict, outfile)
 
-    def pretty_print_json(self, json_dict):
+    def pretty_print_json(self, ent_dict):
         """
-        :action: Pretty prints json to console
-        :param json_dict:
+        :action: Pretty prints dictionary to console
+        :param ent_dict: Diciontary containing previously affiliated entities
         :return: None
         """
-        print(json.dumps(json_dict, indent=4, sort_keys=True))
+        print(json.dumps(ent_dict, indent=4, sort_keys=True))
+
+
+    """ ADDTIONAL ENTITY TOOLS WITH THE PROF API, NOT TESTED OR INTEGRATED"""
 
     def identify_entity(self, sentence):
         """
@@ -107,6 +93,7 @@ class EntityLinker():
                 entityClass = re.sub("(.+Entity Class: )|(<br/>.+)", "", str(i))
                 taggedMentions.append(['Entity', entityID, entityMention, entityMentionType, entityType, entityClass])
             # If it is an event like "meet"
+            """
             elif (str(i).startswith("<div id=\"e")):
                 eventID = re.sub("(.+Event ID: )|(<br/>.+)", "", str(i))
                 trigger = re.sub("(.+Trigger: )|(<br/>.+)", "", str(i))
@@ -119,6 +106,7 @@ class EntityLinker():
                 arguments = re.sub("(.+Arguments: )|(<br/>.+)", "", str(i))
                 person = re.sub("(.+;\">)|(</a>.+)", "", str(i))
                 taggedMentions.append(['Event', eventID, trigger, eventType, eventSubtype, genericity, modality, polarity, tense, arguments, person])
+            """
         return taggedMentions
 
     """ END UNTESTED ENTITIY TOOLS"""
@@ -142,53 +130,94 @@ class EntityLinker():
                 available. Otherwise, a string 'None' is returned.
         """
         # Go through wikipedia json to get the id for wikidata
-        resp = requests.get(url='https://en.wikipedia.org/w/api.php?action=query&format=json&prop=pageprops&titles=' + title)
+        try:
+            resp = requests.get(url='https://en.wikipedia.org/w/api.php?action=query&format=json&prop=pageprops&titles=' + title)
+        except:
+            return None
         data = resp.json()
         page_data = data['query']['pages'][list(data['query']['pages'].keys())[0]]
-        page_properties = page_data['pageprops']
-        item_id = page_properties['wikibase_item']
+        try:
+            page_properties = page_data['pageprops']
+            item_id = page_properties['wikibase_item']
+        except KeyError:
+            return 'None found'
 
         # With item id in tow, extract political affiliation
         client = Client()
         entity = client.get(item_id, load=True)
+        print(item_id)
         try:
             party_entity = entity.getlist(client.get('P102'))[0]
             return str(party_entity.label)
         except:
             return 'None found'
 
+    def get_continuous_chunks(self, text):
+        chunked = ne_chunk(pos_tag(word_tokenize(text)))
+        continuous_chunk = []
+        current_chunk = []
 
-    def entity_to_political_party(self, entity, type='Person', previous_subject_titles=[]):
+        for i in chunked:
+            if type(i) == Tree:
+                current_chunk.append(" ".join([token for token, pos in i.leaves()]))
+            elif current_chunk:
+                named_entity = " ".join(current_chunk)
+                if named_entity not in continuous_chunk:
+                    continuous_chunk.append(named_entity)
+                    current_chunk = []
+            else:
+                continue
+
+        if continuous_chunk:
+            named_entity = " ".join(current_chunk)
+            if named_entity not in continuous_chunk:
+                continuous_chunk.append(named_entity)
+
+        return continuous_chunk
+
+    def entity_to_political_party(self, entity, type='Person', previous_subject_titles=[], train=True):
         """
         :param entity: String containing the name of the entity to be passed
         :return: A tuple containing the name of the matching page and that page's affiliation
         """
         # If already in dictionary, return dict entry instead of looking on Wikipedia
-        if entity in self.ent_dict:
-            return entity, self.ent_dict[entity]
+        if entity.lower() in self.ent_dict:
+            try:
+                if "None" in self.ent_dict[entity.lower()][1]:
+                    return None
+            except TypeError:
+                # Strange glitch rarely encountered
+                return None
+            else:
+                return self.ent_dict[entity.lower()]
 
-        pages = wikipedia.search(entity)
-        # With the exception of Morrissey and Madonna, people have two words in their names
-        if type =='Person':
-            page_titles = [p.split() for p in pages]
-            page_titles = [[w for w in title if '(' not in w] for title in page_titles]
-            page_titles = [' '.join(title) for title in page_titles if len(title) >= 2]
+        if train:
+            try:
+                pages = wikipedia.search(entity)
+            except ConnectionError:
+                return None
+            # With the exception of Morrissey and Madonna, people have two words in their names
+            if type =='Person':
+                page_titles = [p.split() for p in pages]
+                page_titles = [[w for w in title if '(' not in w] for title in page_titles]
+                page_titles = [' '.join(title) for title in page_titles if len(title) >= 2]
+            else:
+                sys.stderr.write("ERROR: Only person entity-type supported")
+                return None
+
+            # Iterate through these titles
+            for title in page_titles[:3]:
+                found_party = self.page_title_to_political_party(title)
+                if found_party != 'None found':
+                    self.ent_dict[entity.lower()] = (title, found_party)
+                    self.save_dictionary()
+                    return title, found_party
+            else:
+                self.ent_dict[entity.lower()] = ('No political figure', 'None found')
+                self.save_dictionary()
+                return None
         else:
-            sys.stderr.write("ERROR: Only person entity-type supported")
             return None
-
-        # If any of the results have been previously discussed in the thread, those should be given priority
-        new_titles = [title for title in page_titles if title not in previous_subject_titles]
-        page_titles = previous_subject_titles + new_titles
-
-        # Iterate through these titles
-        for title in page_titles:
-            found_party = self.page_title_to_political_party(title)
-            if found_party != 'None found':
-                self.ent_dict[entity] = found_party
-                self.save_json()
-                return title, found_party
-        return 'No political figure', 'None found'
 
     def political_party_to_value(self, party):
         """
@@ -196,129 +225,11 @@ class EntityLinker():
         :return: A value [-1.0, 1.0] representing this affiliation.
         """
         # TODO: More nuanced approach, use wikipedia API rather than fixed values
-        if 'republican' in party.lowercase():
-            return 1
-        elif 'democrat' in party.lowercase():
-            return -1
-        else:
-            sys.stderr.write('ERROR: Method not yet completed.\n Cannot handle ' + party)
-            return 0
+        if party is not None:
+            if 'republican' in party.lower():
+                return 1
+            elif 'democrat' in party.lower():
+                return -1
 
+        return 0
 
-class Tagger(ChunkParserI):
-    def __init__(self, data=None, test=False, force_new=False, **kwargs):
-        def features(tokens, index, history):
-            word, pos = tokens[index]
-            prev_word, prev_pos = tokens[index - 1] if index > 0 else ('START', 'START')
-            next_word, next_pos = tokens[index + 1] if index + 1 < len(tokens) else ('END', 'END')
-
-            next_next_word, next_next_pos = tokens[index + 2] if index + 2 < len(tokens) else ('END2', 'END2')
-            prev_prev_word, prev_prev_pos = tokens[index - 2] if index > 1 else ('START2', 'START2')
-
-            return {
-                'word': word,
-                'stem': SnowballStemmer("english").stem(word),
-                'pos': pos,
-
-                'next_word': next_word,
-                'next_pos': next_pos,
-
-                'two_words_ahead': next_next_word,
-                'two_pos_ahead':next_next_pos,
-
-                'prev_word': prev_word,
-                'prev_pos': prev_pos,
-
-                'two_words_past': prev_prev_word,
-                'two_pos_past': prev_prev_pos,
-            }
-        if force_new or not os.path.isfile('cached_data/tagger.p'):
-            # Default parameter described here rather in line so we can check file exists.
-            try:
-                data = conll2000.chunked_sents()
-            except LookupError:
-                sys.stderr.write('Warning: Default training data does not exist, downloading now...')
-                sys.stderr.flush()
-                nltk.download('conll2000')
-                try:
-                    data = conll2000.chunked_sents()
-                except LookupError:
-                    # If we fail a second time, then the download has failed.
-                    sys.stderr.write('Error: Could not download training data.\nExiting.')
-                    exit()
-            data = list(data)
-            # Randomize the order of the data
-            random.shuffle(data)
-            # Its a large corpus, so just 10% suffices.
-            training_data = data[:int(.05*len(data))]
-
-            training_data = [tree2conlltags(sent) for sent in training_data]
-            training_data = [[((word, pos), chunk) for word, pos, chunk in sent] for sent in training_data]
-
-            self.feature_detector = features
-            self.tagger = ClassifierBasedTagger(
-                train=training_data,
-                feature_detector=features,
-                **kwargs)
-
-            # TODO: Find way to save classifier
-            """
-            with open('cached_data/tagger.p', 'wb') as output:
-                pickle.dump(self.tagger, output, pickle.HIGHEST_PROTOCOL)
-        else:
-            with open('cached_data/tagger.p', 'rb') as input:
-                self.tagger = pickle.load(input)
-            """
-        if test:
-            test_data = data[int(.1*len(list(data))):]
-            print(self.evaluate(test_data))
-
-    def parse(self, sentence):
-        """
-        Processes a sentence, returning larger chunks.
-        :param sentence: String to be analyzed
-        :return: A list of tuples containing a word, it's tag, and its broader chunk.
-        """
-        chunks = self.tagger.tag(self.preprocess(sentence))
-        chunks = conlltags2tree([(w, t, c) for ((w, t), c) in chunks])
-        return chunks
-
-    def preprocess(self, comment):
-        """
-        :param comment: A string
-        :return: A list of pos_tagged sentences.
-        """
-        # Break into individual sentences.
-        sentences = [nltk.tokenize.word_tokenize(sentence) for sentence in tokenizer.tokenize(comment)]
-        # Apply basic POS tagging.
-        try:
-            tagged_sentences = [nltk.pos_tag(sentence) for sentence in sentences]
-        except LookupError:
-            nltk.download(nltk.download('averaged_perceptron_tagger'))
-            tagged_sentences = [nltk.pos_tag(sentence) for sentence in sentences]
-
-        return tagged_sentences
-
-    def convert(self, tree):
-        return tree2conlltags(tree)
-
-    def get_nps(self, tags):
-        """
-        From the parsed tags, returns just the noun phrases, for possible entity linking.
-        :param tags: A list containing tuples of word, tag, and chunk
-        :return: A list of strings of the proper nouns
-        """
-        relevant_tags = [(t, i) for i, t in enumerate(tags) if 'NP' in t[2] and 'NNP' == t[1]]
-        groups = []
-        group = []
-        last = -2
-        for t, i in relevant_tags:
-            if 'I' in t[2] or last+1 == i:
-                group += [t]
-                last = i
-            else:
-                groups.append(group)
-                group = [t]
-                last = i
-        names = [' '.join([g[0] for g in group]) for group in groups[1:]]
-        return names
