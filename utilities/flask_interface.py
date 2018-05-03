@@ -54,7 +54,6 @@ class Interface(object):
             if val != 0:
                 new_val = self.sentiment.predict(comment)
                 val = val*new_val
-
             return val
 
         # Process the number of discussions described above
@@ -68,13 +67,19 @@ class Interface(object):
                         'words': comment.body.split(' '),
                         'score': comment.score,
                         'url': comment.permalink,
-                        'r_words': set([]),
-                        'l_words': set([]),
+                        # We'll seed it with these keys, partially because they're sometimes missed
+                        # as they can be adjectives as well as nouns.
+                        'r_words': {'republican', 'republicans', 'gop'},
+                        'l_words': {'democrats', 'democrat', 'dems'},
                         'sentiment': self.sentiment.predict(comment.body)
                         }
                 nps = self.ent_linker.get_continuous_chunks(comment.body)[:-1]
+                # We'll ignore thing that are upper-case too, partially because they're more likely to be
+                # false-positives, but also because people who type in caps aren't contributing to the conversation.
                 affiliations = [(np, self.ent_linker.entity_to_political_party(np)) for np in nps if
-                                self.ent_linker.entity_to_political_party(np) is not None]
+                                self.ent_linker.entity_to_political_party(np) is not None and np != np.upper()]
+
+                print(affiliations)
 
                 for np, affiliation in affiliations:
                     if "Republican Party" == affiliation[1]:
@@ -96,14 +101,10 @@ class Interface(object):
                     sub['l_percentage'] += abs(mod)
 
             total = (sub['r_percentage']+sub['l_percentage'])
-            try:
+            if total != 0:
                 sub['r_percentage'] = sub['r_percentage']/total*100
                 sub['l_percentage'] = sub['l_percentage']/total*100
-            except ZeroDivisionError:
-                sub['r_percentage'] = 0
-                sub['l_percentage'] = 0
 
             discussions.append(sub)
-            print(len(discussions))
 
         return discussions
