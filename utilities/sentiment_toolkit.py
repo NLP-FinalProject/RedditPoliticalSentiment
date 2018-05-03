@@ -74,14 +74,14 @@ class SentimentClassifier(object):
         :return: List or value, see above
         '''
         words = self.tokenizer.tokenize(text)
-        vector = self.words_to_vector(words)
+        vector = self.words_to_vector(words, max=10000)
         vector = pad_sequences([vector], maxlen=100, value=0.)
         probs = self.model.predict(vector)[0].tolist()
         if full_probs:
             return probs
         else:
             pos, neg = probs
-            if abs(pos-neg) < .3:
+            if abs(pos-neg) < .1:
                 return 0
             else:
                 return 2*probs.index(max(probs))-1
@@ -104,14 +104,14 @@ class SentimentClassifier(object):
         '''
         return ' '.join(self.id_to_word[i] for i in vector)
 
-    def words_to_vector(self, words):
+    def words_to_vector(self, words, max):
         '''
         :param words: A string containing, presumably, multiple words.
         :return: A list of integers starting with 0.
         '''
         words[0] = words[0].lower()
         words = [word for word in words if word.lower() not in stop_words]
-        vector = [1] + [self.word_to_id[word] if word in self.word_to_id else 2 for word in words]
+        vector = [1] + [self.word_to_id[word] if word in self.word_to_id and self.word_to_id[word] <= max else 2 for word in words]
         return vector
 
 

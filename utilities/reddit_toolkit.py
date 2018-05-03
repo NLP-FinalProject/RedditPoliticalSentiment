@@ -28,7 +28,8 @@ class RedditExplorer(object):
         sub['score'] = submission.score
         sub['url'] = 'https://reddit.com' + submission.permalink
         sub['comment_count'] = submission.num_comments
-        sub['comments'] = submission.comments
+        sub['r_percentage'] = 0.00
+        sub['l_percentage'] = 0.00
         return sub
 
     def top_comments(self, comments, num_top_comments=3):
@@ -40,7 +41,8 @@ class RedditExplorer(object):
                 break
         return top_comments
 
-    def all_comments_to_list(self, submission_comments, *, relevance_threshold=10, min_length=100):
+    def all_comments_to_list(self, submission_comments, *, relevance_threshold=10, min_length=100,
+                             max_num_comments=100):
         """
         Traverses the comment tree returning a list containing all comments and their scores.
 
@@ -50,7 +52,7 @@ class RedditExplorer(object):
         :return: A list of all comments and their scores meeting the threshold remands.
         :rtype: list[(str, int)]
 
-        # TODO: This does not retrieve all comments on very large threads.
+        # TODO: This does not retrieve all comments on very large threads. Does this matter?
 
         """
         all_comments = submission_comments.list()
@@ -59,5 +61,5 @@ class RedditExplorer(object):
                         and comment.author is not None
                         and comment.author.name != 'AutoModerator'
                         and abs(comment.score) > relevance_threshold
-                        and len(comment.body) > min_length]
+                        and len(comment.body) > min_length][:max_num_comments]
         return key_comments

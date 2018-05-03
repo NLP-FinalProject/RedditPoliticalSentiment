@@ -1,9 +1,10 @@
 # Collection of the frequently called functions we'll be using for entity linking
 
-
+from bs4 import BeautifulSoup
+from nltk import ne_chunk, pos_tag, word_tokenize
+from nltk.tree import Tree
 from wikidata.client import Client
 
-from bs4 import BeautifulSoup
 import nltk.tokenize
 import os
 import re
@@ -129,7 +130,10 @@ class EntityLinker(object):
                 available. Otherwise, a string 'None' is returned.
         """
         # Go through wikipedia json to get the id for wikidata
-        resp = requests.get(url='https://en.wikipedia.org/w/api.php?action=query&format=json&prop=pageprops&titles=' + title)
+        try:
+            resp = requests.get(url='https://en.wikipedia.org/w/api.php?action=query&format=json&prop=pageprops&titles=' + title)
+        except:
+            return None
         data = resp.json()
         page_data = data['query']['pages'][list(data['query']['pages'].keys())[0]]
         try:
@@ -141,54 +145,78 @@ class EntityLinker(object):
         # With item id in tow, extract political affiliation
         client = Client()
         entity = client.get(item_id, load=True)
+        print(item_id)
         try:
             party_entity = entity.getlist(client.get('P102'))[0]
             return str(party_entity.label)
         except:
             return 'None found'
 
-    def dict_lookup(self, word):
-        if word.lower() in self.ent_dict:
-            return self.ent_dict[word.lower()][1]
-        else:
-            return ""
+    def get_continuous_chunks(self, text):
+        chunked = ne_chunk(pos_tag(word_tokenize(text)))
+        continuous_chunk = []
+        current_chunk = []
 
-    def entity_to_political_party(self, entity, type='Person', previous_subject_titles=[]):
+        for i in chunked:
+            if type(i) == Tree:
+                current_chunk.append(" ".join([token for token, pos in i.leaves()]))
+            elif current_chunk:
+                named_entity = " ".join(current_chunk)
+                if named_entity not in continuous_chunk:
+                    continuous_chunk.append(named_entity)
+                    current_chunk = []
+            else:
+                continue
+
+        if continuous_chunk:
+            named_entity = " ".join(current_chunk)
+            if named_entity not in continuous_chunk:
+                continuous_chunk.append(named_entity)
+
+        return continuous_chunk
+
+    def entity_to_political_party(self, entity, type='Person', previous_subject_titles=[], train=True):
         """
         :param entity: String containing the name of the entity to be passed
         :return: A tuple containing the name of the matching page and that page's affiliation
         """
         # If already in dictionary, return dict entry instead of looking on Wikipedia
         if entity.lower() in self.ent_dict:
-            if "None" in self.ent_dict[entity.lower()][1]:
+            try:
+                if "None" in self.ent_dict[entity.lower()][1]:
+                    return None
+            except TypeError:
+                # Strange glitch rarely encountered
                 return None
             else:
                 return self.ent_dict[entity.lower()]
 
-        pages = wikipedia.search(entity)
-        # With the exception of Morrissey and Madonna, people have two words in their names
-        if type =='Person':
-            page_titles = [p.split() for p in pages]
-            page_titles = [[w for w in title if '(' not in w] for title in page_titles]
-            page_titles = [' '.join(title) for title in page_titles if len(title) >= 2]
-        else:
-            sys.stderr.write("ERROR: Only person entity-type supported")
-            return None
+        if train:
+            try:
+                pages = wikipedia.search(entity)
+            except ConnectionError:
+                return None
+            # With the exception of Morrissey and Madonna, people have two words in their names
+            if type =='Person':
+                page_titles = [p.split() for p in pages]
+                page_titles = [[w for w in title if '(' not in w] for title in page_titles]
+                page_titles = [' '.join(title) for title in page_titles if len(title) >= 2]
+            else:
+                sys.stderr.write("ERROR: Only person entity-type supported")
+                return None
 
-        # If any of the results have been previously discussed in the thread, those should be given priority
-        new_titles = [title for title in page_titles if title not in previous_subject_titles]
-        page_titles = previous_subject_titles + new_titles
-
-        # Iterate through these titles
-        for title in page_titles:
-            found_party = self.page_title_to_political_party(title)
-            if found_party != 'None found':
-                self.ent_dict[entity.lower()] = (title, found_party)
+            # Iterate through these titles
+            for title in page_titles[:3]:
+                found_party = self.page_title_to_political_party(title)
+                if found_party != 'None found':
+                    self.ent_dict[entity.lower()] = (title, found_party)
+                    self.save_dictionary()
+                    return title, found_party
+            else:
+                self.ent_dict[entity.lower()] = ('No political figure', 'None found')
                 self.save_dictionary()
-                return title, found_party
+                return None
         else:
-            self.ent_dict[entity.lower()] = ('No political figure', 'None found')
-            self.save_dictionary()
             return None
 
     def political_party_to_value(self, party):
@@ -197,11 +225,11 @@ class EntityLinker(object):
         :return: A value [-1.0, 1.0] representing this affiliation.
         """
         # TODO: More nuanced approach, use wikipedia API rather than fixed values
-        if 'republican' in party.lowercase():
-            return 1
-        elif 'democrat' in party.lowercase():
-            return -1
-        else:
-            sys.stderr.write('ERROR: Method not yet completed.\n Cannot handle ' + party)
-            return 0
+        if party is not None:
+            if 'republican' in party.lower():
+                return 1
+            elif 'democrat' in party.lower():
+                return -1
+
+        return 0
 
