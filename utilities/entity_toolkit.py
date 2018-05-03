@@ -30,44 +30,35 @@ except LookupError:
     nltk.download('punkt')
     tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
 
-    """ ADDTIONAL ENTITY TOOLS WITH THE PROF API, NOT TESTED OR INTEGRATED"""
-
 
 class EntityLinker(object):
-    def __init__(self, *, path='entity_files/dict.json'):
+    def __init__(self, *, path='saved_data/entity_files/dict.json'):
         self.path = path
 
         # If file exists
         if os.path.isfile(path):
             # Load json file into dictionary
-            self.load_json(path)
+            self.load_dictionary()
 
         # If parent folder exists
-        elif os.path.isdir((os.path.dirname(path))):
+        else:
             self.ent_dict = {}
             # Save dictionary to json file
-            self.save_json(path)
+            self.save_dictionary()
 
-        # If parent folder doesn't exist
-        else:
-            sys.stderr.write("ERROR: PATH '" + path + "' NOT FOUND")
-            exit()
-
-    def load_json(self, path='entity_files/dict.json'):
+    def load_dictionary(self):
         """
         :action: Saves dictionary to json file
-        :param path:
         :return: None
         """
-        self.ent_dict = dict(json.load(open(path)))
+        self.ent_dict = dict(json.load(open(self.path)))
 
-    def save_json(self, path='entity_files/dict.json'):
+    def save_dictionary(self):
         """
         :action: Loads json file into dictionary
-        :param path:
         :return: None
         """
-        with open(path, 'w') as outfile:
+        with open(self.path, 'w') as outfile:
             json.dump(self.ent_dict, outfile)
 
     def pretty_print_json(self, ent_dict):
@@ -77,6 +68,9 @@ class EntityLinker(object):
         :return: None
         """
         print(json.dumps(ent_dict, indent=4, sort_keys=True))
+
+
+    """ ADDTIONAL ENTITY TOOLS WITH THE PROF API, NOT TESTED OR INTEGRATED"""
 
     def identify_entity(self, sentence):
         """
@@ -164,7 +158,7 @@ class EntityLinker(object):
         """
         # If already in dictionary, return dict entry instead of looking on Wikipedia
         if entity in self.ent_dict:
-            return entity, self.ent_dict[entity]
+            return self.ent_dict[entity]
 
         pages = wikipedia.search(entity)
         # With the exception of Morrissey and Madonna, people have two words in their names
@@ -184,8 +178,8 @@ class EntityLinker(object):
         for title in page_titles:
             found_party = self.page_title_to_political_party(title)
             if found_party != 'None found':
-                self.ent_dict[entity] = found_party
-                self.save_json()
+                self.ent_dict[entity] = (title, found_party)
+                self.save_dictionary()
                 return title, found_party
         return 'No political figure', 'None found'
 

@@ -30,9 +30,9 @@ class RedditExplorer(object):
         sub['comments'] = submission.comments
         return sub
 
-    def top_comments(self, submission, num_top_comments):
-        return [comment for comment in submission.comments[:num_top_comments + 1]
-                    if comment.author is not None and comment.author.name != 'AutoModerator']
+    def top_comments(self, comments, num_top_comments):
+        return [comment for comment in list(comments)[:num_top_comments + 1]
+                    if comment.author is not None and comment.author.name != 'AutoModerator'][:num_top_comments]
 
     def all_comments_to_list(self, submission_comments, *, relevance_threshold=10, min_length=100):
         """
@@ -43,25 +43,15 @@ class RedditExplorer(object):
         :param min_length: The minimum length of a comment, as sentiment analysis is less precise on shorter statements.
         :return: A list of all comments and their scores meeting the threshold remands.
         :rtype: list[(str, int)]
+
+        # TODO: This does not retrieve all comments on very large threads.
+
         """
-        def comment_replies(comment):
-            '''
-            Recursively iterates through a comment tree
-            :param comment: The root of the current comment tree
-            :return: A list containing the contents and score of the given comment as well as all children comments.
-            '''
-            all_replies = [(comment.body, comment.score)] if abs(comment.score) > relevance_threshold \
-                and len(comment.body) > min_length \
-                else []
-
-            for reply_comm in comment.replies:
-                all_replies += comment_replies(reply_comm)
-            return all_replies
-
-        # The limit of 0 simply replaces the "more comments" in the tree, which can otherwise throw things off.
-        submission_comments = submission_comments.replace_more(limit=0)
-
-        comments = []
-        for top_level_comment in submission_comments:
-            comments += comment_replies(top_level_comment)
-        return comments
+        all_comments = submission_comments.list()
+        key_comments = [(comment.body, comment.score) for comment in all_comments if
+                        not isinstance(comment, praw.models.reddit.more.MoreComments)
+                        and comment.author is not None
+                        and comment.author.name != 'AutoModerator'
+                        and abs(comment.score) > relevance_threshold
+                        and len(comment.body) > min_length]
+        return key_comments

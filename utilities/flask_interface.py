@@ -3,8 +3,6 @@ from utilities.reddit_toolkit import RedditExplorer
 from utilities.sentiment_toolkit import SentimentClassifier
 
 import utilities.entity_toolkit as et
-import utilities.sentiment_toolkit as st
-import praw
 
 
 # Interface between flask and the core of this project.
