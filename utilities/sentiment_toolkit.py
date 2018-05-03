@@ -81,7 +81,7 @@ class SentimentClassifier(object):
             return probs
         else:
             pos, neg = probs
-            if abs(pos-neg) < 0.4:
+            if abs(pos-neg) < 0.1:
                 return 0
             else:
                 return 2*probs.index(max(probs))-1
