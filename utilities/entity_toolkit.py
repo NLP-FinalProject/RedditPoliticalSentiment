@@ -13,6 +13,7 @@ import sys
 import wikipedia
 import urllib3
 import json
+from unidecode import unidecode
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 from nltk.tag import StanfordNERTagger
@@ -72,8 +73,7 @@ class EntityLinker(object):
         """
         serviceurl = 'https://blender04.cs.rpi.edu/~jih/cgi-bin/ere.py'
         payload = {'textcontent': sentence}
-        # verify=False makes it so a HTTPS certificate is not required for the request
-        r = requests.get(serviceurl, params=payload, verify=False)
+        r = requests.post(serviceurl, data=payload)
 
         parsed_html = BeautifulSoup(r.text, "html.parser")
         # We are only concerned about the div lines as that's where the entities and events are in the HTML
@@ -108,6 +108,46 @@ class EntityLinker(object):
                 taggedMentions.append(['Event', eventID, trigger, eventType, eventSubtype, genericity, modality, polarity, tense, arguments, person])
             """
         return taggedMentions
+
+    def identify_all_entities(self, sentence):
+        """
+        :param sentence:
+        :return: A list of entities and events in the order they appear in the sentence
+        """
+        serviceurl = 'https://blender04.cs.rpi.edu/~jih/cgi-bin/ere.py'
+        payload = {'textcontent': sentence}
+        r = requests.post(serviceurl, data=payload)
+
+        parsed_html = BeautifulSoup(r.text, "html.parser")
+        # We are only concerned about the div lines as that's where the entities and events are in the HTML
+        mentions = parsed_html.findAll('div')
+
+        htmlString = str(parsed_html)
+
+        commentList = (re.findall((r"-/:_START_OF_COMMENT_:/-(.*?)-/:_END_OF_COMMENT_:/-"), htmlString))
+
+        taggedMentionsAllComments = []
+
+        for i in commentList:
+            parsed_html = BeautifulSoup(i, "html.parser")
+            mentions = parsed_html.findAll('div')
+            print(i)
+
+            # Our list of entities and events
+            taggedMentions = []
+
+            for i in mentions:
+                # If it is an entity like "George Bush"
+                if (str(i).startswith("<div id=\"d")):
+                    entityID = re.sub("(.+Entity ID: )|(<br/>.+)", "", str(i))
+                    entityMention = re.sub("(.+Entity Mention: )|(<br/>.+)", "", str(i))
+                    entityMentionType = re.sub("(.+Entity Mention Type: )|(<br/>.+)", "", str(i))
+                    entityType = re.sub("(.+Entity Type: )|(<br/>.+)", "", str(i))
+                    entityClass = re.sub("(.+Entity Class: )|(<br/>.+)", "", str(i))
+                    taggedMentions.append(['Entity', entityID, entityMention, entityMentionType, entityType, entityClass])
+            print(taggedMentions)
+            taggedMentionsAllComments.append(taggedMentions)
+        return taggedMentionsAllComments
 
     """ END UNTESTED ENTITIY TOOLS"""
 
@@ -231,4 +271,3 @@ class EntityLinker(object):
                 return -1
 
         return 0
-
