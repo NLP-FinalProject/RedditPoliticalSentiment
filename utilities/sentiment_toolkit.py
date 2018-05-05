@@ -114,6 +114,8 @@ class SentimentClassifier(object):
         vector = [1] + [self.word_to_id[word] if word in self.word_to_id and self.word_to_id[word] <= max else 2 for word in words]
         return vector
 
+    def in_dictionary(self, word):
+        return word in self.word_to_id
 
 if __name__ == '__main__':
     # If run individually, we build the classifier.

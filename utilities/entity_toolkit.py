@@ -32,17 +32,6 @@ except LookupError:
     nltk.download('stopwords')
     stop_words = set(stopwords.words('english'))
 
-# more_stop_words = {'I', 'You', 'They', '\'s', 'everyone', 'us', 'we', 'He', 'boy', 'girl', 'child', 'son', 'daughter', 'kid', 'kids', 'we', 'mother', 'father', 'brother', 'sister', 'parent', 'parents', 'many', 'people', 'public', 'one', 'someone', 'people', 'families', 'person', 'citizen', 'citizens', 'individual', 'individuals', 'locals', 'team', 'teams', 'anyone', 'player', 'players'}
-#
-# stop_words = stop_words.union(more_stop_words)
-
-
-stop_words_copy = set(stop_words)
-
-for word in stop_words_copy:
-    stop_words.add(word.lower())
-    stop_words.add(word.capitalize())
-
 class EntityLinker(object):
     def __init__(self, *, path='saved_data/entity_files/dict.json'):
         self.path = path
@@ -80,100 +69,72 @@ class EntityLinker(object):
         print(json.dumps(ent_dict, indent=4, sort_keys=True))
 
 
-    """ ADDTIONAL ENTITY TOOLS WITH THE PROF API, NOT TESTED OR INTEGRATED"""
-
     def identify_entity(self, sentence):
         """
         :param sentence:
         :return: A list of entities and events in the order they appear in the sentence
         """
-        serviceurl = 'https://blender04.cs.rpi.edu/~jih/cgi-bin/ere.py'
+        service_url = 'https://blender04.cs.rpi.edu/~jih/cgi-bin/ere.py'
         payload = {'textcontent': sentence}
-        r = requests.post(serviceurl, data=payload)
+        r = requests.post(service_url, data=payload)
 
         parsed_html = BeautifulSoup(r.text, "html.parser")
         # We are only concerned about the div lines as that's where the entities and events are in the HTML
         mentions = parsed_html.findAll('div')
 
         # Our list of entities and events
-        taggedMentions = []
+        tagged_mentions = []
 
         # For each mention in sentence
         for i in mentions:
             # If it is an entity like "George Bush"
             if (str(i).startswith("<div id=\"d")):
-                entityID = re.sub("(.+Entity ID: )|(<br/>.+)", "", str(i))
-                entityMention = re.sub("(.+Entity Mention: )|(<br/>.+)", "", str(i))
-                entityMentionType = re.sub("(.+Entity Mention Type: )|(<br/>.+)", "", str(i))
-                entityType = re.sub("(.+Entity Type: )|(<br/>.+)", "", str(i))
-                entityClass = re.sub("(.+Entity Class: )|(<br/>.+)", "", str(i))
-                taggedMentions.append(['Entity', entityID, entityMention, entityMentionType, entityType, entityClass])
-            # If it is an event like "meet"
-            """
-            elif (str(i).startswith("<div id=\"e")):
-                eventID = re.sub("(.+Event ID: )|(<br/>.+)", "", str(i))
-                trigger = re.sub("(.+Trigger: )|(<br/>.+)", "", str(i))
-                eventType = re.sub("(.+Event Type: )|(<br/>.+)", "", str(i))
-                eventSubtype = re.sub("(.+Event Subtype: )|(<br/>.+)", "", str(i))
-                genericity = re.sub("(.+Genericity: )|(<br/>.+)", "", str(i))
-                modality = re.sub("(.+Modality: )|(<br/>.+)", "", str(i))
-                polarity = re.sub("(.+Polarity: )|(<br/>.+)", "", str(i))
-                tense = re.sub("(.+Tense: )|(<br/>.+)", "", str(i))
-                arguments = re.sub("(.+Arguments: )|(<br/>.+)", "", str(i))
-                person = re.sub("(.+;\">)|(</a>.+)", "", str(i))
-                taggedMentions.append(['Event', eventID, trigger, eventType, eventSubtype, genericity, modality, polarity, tense, arguments, person])
-            """
-        return taggedMentions
+                entity_id = re.sub("(.+Entity ID: )|(<br/>.+)", "", str(i))
+                entity_mention = re.sub("(.+Entity Mention: )|(<br/>.+)", "", str(i))
+                entity_mention_type = re.sub("(.+Entity Mention Type: )|(<br/>.+)", "", str(i))
+                entity_type = re.sub("(.+Entity Type: )|(<br/>.+)", "", str(i))
+                entity_class = re.sub("(.+Entity Class: )|(<br/>.+)", "", str(i))
+                tagged_mentions.append(['Entity', entity_id, entity_mention, entity_mention_type, entity_type,
+                                        entity_class])
+        return tagged_mentions
 
-    def identify_all_entities(self, comments):
+    def identify_all_entities(self, comments, filter=True):
         """
         :param comments: A list of comments
         :return: A list of entities and events in the order they appear in the comment section, by each comment
         """
-        combinedString = ""
+        combined_string = ""
+        for comment_body, _ in comments:
+            combined_string += "-/:_START_OF_COMMENT_:/- " + unidecode(comment_body) + " -/:_END_OF_COMMENT_:/-"
 
-        for i in comments:
-            combinedString += ("-/:_START_OF_COMMENT_:/- " + unidecode(i[0]) + " -/:_END_OF_COMMENT_:/-")
-
-        serviceurl = 'https://blender04.cs.rpi.edu/~jih/cgi-bin/ere.py'
-        payload = {'textcontent': combinedString}
-        r = requests.post(serviceurl, data=payload)
+        service_url = 'https://blender04.cs.rpi.edu/~jih/cgi-bin/ere.py'
+        payload = {'textcontent': combined_string}
+        r = requests.post(service_url, data=payload)
 
         parsed_html = BeautifulSoup(r.text, "html.parser")
 
-        htmlString = str(parsed_html).replace('\n', ' ')
+        html_string = str(parsed_html).replace('\n', ' ')
 
-        commentList = (re.findall((r"-/:_START_OF_COMMENT_:/-(.*?)-/:_END_OF_COMMENT_:/-"), htmlString))
+        comment_list = (re.findall(r"-/:_START_OF_COMMENT_:/-(.*?)-/:_END_OF_COMMENT_:/-", html_string))
 
-        taggedMentionsAllComments = []
+        tagged_mentions_all_comments = []
 
-        for i in commentList:
-            parsed_html = BeautifulSoup(i, "html.parser")
+        for comment in comment_list:
+            parsed_html = BeautifulSoup(comment, "html.parser")
             mentions = parsed_html.findAll('div')
 
             # Our list of entities and events
-            taggedMentions = []
+            taggged_mentions = []
 
-            for i in mentions:
-                # If it is an entity like "George Bush"
-                if (str(i).startswith("<div id=\"d")):
-                    entityMention = re.sub("(.+Entity Mention: )|(<br/>.+)", "", str(i))
-                    entityType = re.sub("(.+Entity Type: )|(<br/>.+)", "", str(i))
-                    taggedMentions.append((entityMention, entityType))
-            taggedMentionsAllComments.append(taggedMentions)
-        return taggedMentionsAllComments
-
-    def remove_unneeded_entities(self, entities):
-        reduced_entities = []
-        for commentEntityList in entities:
-            reduced_entities.append([])
-            for entity in commentEntityList:
-                if(entity[0] not in stop_words and entity[1] == 'PER'):
-                    reduced_entities[-1].append(entity)
-        return reduced_entities
-
-    """ END UNTESTED ENTITIY TOOLS"""
-
+            # For each raw entity (still in html) in list
+            for entity_html in mentions:
+                # If it is an entity like "George Bush", parse out the entity and type
+                if (str(entity_html).startswith("<div id=\"d")):
+                    entity_mention = re.sub("(.+Entity Mention: )|(<br/>.+)", "", str(entity_html))
+                    entity_type = re.sub("(.+Entity Type: )|(<br/>.+)", "", str(entity_html))
+                    taggged_mentions.append((entity_mention, entity_type))
+            tagged_mentions_all_comments.append(taggged_mentions)
+        return tagged_mentions_all_comments
 
     def get_all_entity_political_parties(self, entity_list):
         """
@@ -237,7 +198,7 @@ class EntityLinker(object):
 
         return continuous_chunk
 
-    def entity_to_political_party(self, entity, type='Person', previous_subject_titles=[], train=True):
+    def entity_to_political_party(self, *, entity, ent_type='PER', previous_subject_titles=[], train=True):
         """
         :param entity: String containing the name of the entity to be passed
         :return: A tuple containing the name of the matching page and that page's affiliation
@@ -247,11 +208,10 @@ class EntityLinker(object):
             try:
                 if "None" in self.ent_dict[entity.lower()][1]:
                     return None
+                else:
+                    return self.ent_dict[entity.lower()]
             except TypeError:
-                # Strange glitch rarely encountered
                 return None
-            else:
-                return self.ent_dict[entity.lower()]
 
         if train:
             try:
@@ -259,12 +219,12 @@ class EntityLinker(object):
             except ConnectionError:
                 return None
             # With the exception of Morrissey and Madonna, people have two words in their names
-            if type =='Person':
+            if ent_type == 'PER':
                 page_titles = [p.split() for p in pages]
                 page_titles = [[w for w in title if '(' not in w] for title in page_titles]
                 page_titles = [' '.join(title) for title in page_titles if len(title) >= 2]
             else:
-                sys.stderr.write("ERROR: Only person entity-type supported")
+                # TODO: ADD SUPPORT TYPES FOR NON-PERSON ENTITIES
                 return None
 
             # Iterate through these titles

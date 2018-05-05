@@ -30,6 +30,10 @@ class RedditExplorer(object):
         sub['comment_count'] = submission.num_comments
         sub['r_percentage'] = 0.00
         sub['l_percentage'] = 0.00
+        # We'll seed it with these keys, partially because they're sometimes missed
+        # as they can be adjectives as well as nouns.
+        sub['r_words'] = {'republican', 'republicans', 'gop'}
+        sub['l_words'] = {'democrats', 'democrat', 'dems'}
         return sub
 
     def top_comments(self, comments, num_top_comments=3):
