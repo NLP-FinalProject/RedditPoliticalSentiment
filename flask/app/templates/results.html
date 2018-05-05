@@ -4,15 +4,7 @@
 
 <div class="container-fluid" id="detail-header">
     <img href="" style="max-height:50px; display:inline-block; margin-bottom:20px;" src="{{ url_for('static', filename='img/reddit.png')}}">
-    <h4 style="display:inline-block; font-size:40px;"> <a href="index.html" style="color:white;"> Reddit Political Sentiment Explorer </a></h4>
-    <form class="input-group" action="demo.html">
-        <input class="form-control" name="q" type="text" placeholder="{{url_string}}">
-        <span class="input-group-btn">
-                  <button class="btn btn-secondary" href="demo.html" style="height:38px!important;" type="submit">
-                  Explore
-                  </button>
-                </span>
-    </form>
+    <h4 style="display:inline-block; font-size:40px;"> <a href="" style="color:white;"> Reddit Political Sentiment Explorer </a></h4>
 </div>
 
 {% if results|length == 0 %}
@@ -60,9 +52,9 @@
                 {% for comment in result.top_comments %}
                     <div class="comment-block">
                         {% for word in comment.words %}
-                            {% if word.lower() in comment.r_words %}
+                            {% if word.lower() in result.r_words %}
                                 <span class="red"> {{word}} </span>
-                            {% elif word.lower() in comment.l_words %}
+                            {% elif word.lower() in result.l_words %}
                                 <span class="blue"> {{word}}</span>
                             {% else %}
                                 {{word}}
