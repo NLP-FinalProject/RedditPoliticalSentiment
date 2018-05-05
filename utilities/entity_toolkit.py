@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 from nltk import ne_chunk, pos_tag, word_tokenize
 from nltk.tree import Tree
 from wikidata.client import Client
+from nltk.corpus import stopwords
 
 import nltk.tokenize
 import os
@@ -25,7 +26,22 @@ try:
 except LookupError:
     nltk.download('punkt')
     tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
+try:
+    stop_words = set(stopwords.words('english'))
+except LookupError:
+    nltk.download('stopwords')
+    stop_words = set(stopwords.words('english'))
 
+# more_stop_words = {'I', 'You', 'They', '\'s', 'everyone', 'us', 'we', 'He', 'boy', 'girl', 'child', 'son', 'daughter', 'kid', 'kids', 'we', 'mother', 'father', 'brother', 'sister', 'parent', 'parents', 'many', 'people', 'public', 'one', 'someone', 'people', 'families', 'person', 'citizen', 'citizens', 'individual', 'individuals', 'locals', 'team', 'teams', 'anyone', 'player', 'players'}
+#
+# stop_words = stop_words.union(more_stop_words)
+
+
+stop_words_copy = set(stop_words)
+
+for word in stop_words_copy:
+    stop_words.add(word.lower())
+    stop_words.add(word.capitalize())
 
 class EntityLinker(object):
     def __init__(self, *, path='saved_data/entity_files/dict.json'):
@@ -118,7 +134,6 @@ class EntityLinker(object):
 
         for i in comments:
             combinedString += ("-/:_START_OF_COMMENT_:/- " + unidecode(i[0]) + " -/:_END_OF_COMMENT_:/-")
-        # print(combinedString + "\n---\n---\n")
 
         serviceurl = 'https://blender04.cs.rpi.edu/~jih/cgi-bin/ere.py'
         payload = {'textcontent': combinedString}
@@ -127,7 +142,6 @@ class EntityLinker(object):
         parsed_html = BeautifulSoup(r.text, "html.parser")
 
         htmlString = str(parsed_html).replace('\n', ' ')
-        print(htmlString)
 
         commentList = (re.findall((r"-/:_START_OF_COMMENT_:/-(.*?)-/:_END_OF_COMMENT_:/-"), htmlString))
 
@@ -143,14 +157,20 @@ class EntityLinker(object):
             for i in mentions:
                 # If it is an entity like "George Bush"
                 if (str(i).startswith("<div id=\"d")):
-                    entityID = re.sub("(.+Entity ID: )|(<br/>.+)", "", str(i))
                     entityMention = re.sub("(.+Entity Mention: )|(<br/>.+)", "", str(i))
-                    entityMentionType = re.sub("(.+Entity Mention Type: )|(<br/>.+)", "", str(i))
                     entityType = re.sub("(.+Entity Type: )|(<br/>.+)", "", str(i))
-                    entityClass = re.sub("(.+Entity Class: )|(<br/>.+)", "", str(i))
-                    taggedMentions.append(['Entity', entityID, entityMention, entityMentionType, entityType, entityClass])
+                    taggedMentions.append((entityMention, entityType))
             taggedMentionsAllComments.append(taggedMentions)
         return taggedMentionsAllComments
+
+    def remove_unneeded_entities(self, entities):
+        reduced_entities = []
+        for commentEntityList in entities:
+            reduced_entities.append([])
+            for entity in commentEntityList:
+                if(entity[0] not in stop_words and entity[1] == 'PER'):
+                    reduced_entities[-1].append(entity)
+        return reduced_entities
 
     """ END UNTESTED ENTITIY TOOLS"""
 
