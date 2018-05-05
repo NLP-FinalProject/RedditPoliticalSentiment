@@ -109,20 +109,25 @@ class EntityLinker(object):
             """
         return taggedMentions
 
-    def identify_all_entities(self, sentence):
+    def identify_all_entities(self, comments):
         """
-        :param sentence:
-        :return: A list of entities and events in the order they appear in the sentence
+        :param comments: A list of comments
+        :return: A list of entities and events in the order they appear in the comment section, by each comment
         """
+        combinedString = ""
+
+        for i in comments:
+            combinedString += ("-/:_START_OF_COMMENT_:/- " + unidecode(i[0]) + " -/:_END_OF_COMMENT_:/-")
+        # print(combinedString + "\n---\n---\n")
+
         serviceurl = 'https://blender04.cs.rpi.edu/~jih/cgi-bin/ere.py'
-        payload = {'textcontent': sentence}
+        payload = {'textcontent': combinedString}
         r = requests.post(serviceurl, data=payload)
 
         parsed_html = BeautifulSoup(r.text, "html.parser")
-        # We are only concerned about the div lines as that's where the entities and events are in the HTML
-        mentions = parsed_html.findAll('div')
 
-        htmlString = str(parsed_html)
+        htmlString = str(parsed_html).replace('\n', ' ')
+        print(htmlString)
 
         commentList = (re.findall((r"-/:_START_OF_COMMENT_:/-(.*?)-/:_END_OF_COMMENT_:/-"), htmlString))
 
@@ -131,7 +136,6 @@ class EntityLinker(object):
         for i in commentList:
             parsed_html = BeautifulSoup(i, "html.parser")
             mentions = parsed_html.findAll('div')
-            print(i)
 
             # Our list of entities and events
             taggedMentions = []
@@ -145,7 +149,6 @@ class EntityLinker(object):
                     entityType = re.sub("(.+Entity Type: )|(<br/>.+)", "", str(i))
                     entityClass = re.sub("(.+Entity Class: )|(<br/>.+)", "", str(i))
                     taggedMentions.append(['Entity', entityID, entityMention, entityMentionType, entityType, entityClass])
-            print(taggedMentions)
             taggedMentionsAllComments.append(taggedMentions)
         return taggedMentionsAllComments
 
