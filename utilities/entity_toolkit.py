@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 from nltk import ne_chunk, pos_tag, word_tokenize
 from nltk.tree import Tree
 from wikidata.client import Client
+from nltk.corpus import stopwords
 
 import nltk.tokenize
 import os
@@ -13,6 +14,7 @@ import sys
 import wikipedia
 import urllib3
 import json
+from unidecode import unidecode
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 from nltk.tag import StanfordNERTagger
@@ -24,7 +26,22 @@ try:
 except LookupError:
     nltk.download('punkt')
     tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
+try:
+    stop_words = set(stopwords.words('english'))
+except LookupError:
+    nltk.download('stopwords')
+    stop_words = set(stopwords.words('english'))
 
+# more_stop_words = {'I', 'You', 'They', '\'s', 'everyone', 'us', 'we', 'He', 'boy', 'girl', 'child', 'son', 'daughter', 'kid', 'kids', 'we', 'mother', 'father', 'brother', 'sister', 'parent', 'parents', 'many', 'people', 'public', 'one', 'someone', 'people', 'families', 'person', 'citizen', 'citizens', 'individual', 'individuals', 'locals', 'team', 'teams', 'anyone', 'player', 'players'}
+#
+# stop_words = stop_words.union(more_stop_words)
+
+
+stop_words_copy = set(stop_words)
+
+for word in stop_words_copy:
+    stop_words.add(word.lower())
+    stop_words.add(word.capitalize())
 
 class EntityLinker(object):
     def __init__(self, *, path='saved_data/entity_files/dict.json'):
@@ -72,8 +89,7 @@ class EntityLinker(object):
         """
         serviceurl = 'https://blender04.cs.rpi.edu/~jih/cgi-bin/ere.py'
         payload = {'textcontent': sentence}
-        # verify=False makes it so a HTTPS certificate is not required for the request
-        r = requests.get(serviceurl, params=payload, verify=False)
+        r = requests.post(serviceurl, data=payload)
 
         parsed_html = BeautifulSoup(r.text, "html.parser")
         # We are only concerned about the div lines as that's where the entities and events are in the HTML
@@ -108,6 +124,53 @@ class EntityLinker(object):
                 taggedMentions.append(['Event', eventID, trigger, eventType, eventSubtype, genericity, modality, polarity, tense, arguments, person])
             """
         return taggedMentions
+
+    def identify_all_entities(self, comments):
+        """
+        :param comments: A list of comments
+        :return: A list of entities and events in the order they appear in the comment section, by each comment
+        """
+        combinedString = ""
+
+        for i in comments:
+            combinedString += ("-/:_START_OF_COMMENT_:/- " + unidecode(i[0]) + " -/:_END_OF_COMMENT_:/-")
+
+        serviceurl = 'https://blender04.cs.rpi.edu/~jih/cgi-bin/ere.py'
+        payload = {'textcontent': combinedString}
+        r = requests.post(serviceurl, data=payload)
+
+        parsed_html = BeautifulSoup(r.text, "html.parser")
+
+        htmlString = str(parsed_html).replace('\n', ' ')
+
+        commentList = (re.findall((r"-/:_START_OF_COMMENT_:/-(.*?)-/:_END_OF_COMMENT_:/-"), htmlString))
+
+        taggedMentionsAllComments = []
+
+        for i in commentList:
+            parsed_html = BeautifulSoup(i, "html.parser")
+            mentions = parsed_html.findAll('div')
+
+            # Our list of entities and events
+            taggedMentions = []
+
+            for i in mentions:
+                # If it is an entity like "George Bush"
+                if (str(i).startswith("<div id=\"d")):
+                    entityMention = re.sub("(.+Entity Mention: )|(<br/>.+)", "", str(i))
+                    entityType = re.sub("(.+Entity Type: )|(<br/>.+)", "", str(i))
+                    taggedMentions.append((entityMention, entityType))
+            taggedMentionsAllComments.append(taggedMentions)
+        return taggedMentionsAllComments
+
+    def remove_unneeded_entities(self, entities):
+        reduced_entities = []
+        for commentEntityList in entities:
+            reduced_entities.append([])
+            for entity in commentEntityList:
+                if(entity[0] not in stop_words and entity[1] == 'PER'):
+                    reduced_entities[-1].append(entity)
+        return reduced_entities
 
     """ END UNTESTED ENTITIY TOOLS"""
 
@@ -231,4 +294,3 @@ class EntityLinker(object):
                 return -1
 
         return 0
-
