@@ -31,7 +31,7 @@ class SentimentClassifier(object):
         net = tflearn.lstm(net, 128, dropout=0.8)
         net = tflearn.fully_connected(net, 2, activation='softmax')
         net = tflearn.regression(net, optimizer='adam', learning_rate=0.0001, loss='categorical_crossentropy')
-        self.model = tflearn.DNN(net, tensorboard_verbose=0)
+        self.model = tflearn.DNN(net, tensorboard_verbose=3)
 
         if load_path is None:
             self._train_model(save_path)
@@ -104,7 +104,7 @@ class SentimentClassifier(object):
         '''
         return ' '.join(self.id_to_word[i] for i in vector)
 
-    def words_to_vector(self, words, max):
+    def words_to_vector(self, words, max=10000):
         '''
         :param words: A string containing, presumably, multiple words.
         :return: A list of integers starting with 0.
