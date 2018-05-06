@@ -119,7 +119,7 @@ class SentimentClassifier(object):
 
 if __name__ == '__main__':
     # If run individually, we build the classifier.
-    classifier = SentimentClassifier(save_path='trained_models/model.tfl')
+    classifier = SentimentClassifier(save_path='trained_models/sentiment.tfl')
     print("Testing positive response.")
     print(classifier.predict("I love tflearn more than anything! I want to use it every day!"))
     print(classifier.predict("I think that tflearn is the worst thing I have ever seen."))

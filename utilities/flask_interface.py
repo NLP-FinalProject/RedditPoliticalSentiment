@@ -15,7 +15,7 @@ class Interface(object):
     def __init__(self, abs_path=""):
         self.rt = RedditExplorer(client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
         self.ent_linker = et.EntityLinker(path=abs_path+'saved_data/entity_files/dict.json')
-        self.sentiment = SentimentClassifier(load_path=abs_path + 'trained_models/model.tfl')
+        self.sentiment = SentimentClassifier(load_path=abs_path + 'trained_models/sentiment.tfl')
         self.stop_words = set(stopwords.words("english"))
 
     def flask_packaging(self, *, url, max_number=5, num_top_com=3):
