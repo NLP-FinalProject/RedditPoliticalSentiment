@@ -2,7 +2,7 @@
 
 ![example](https://i.imgur.com/ivhpNPF.gif)
 
-This project is a Flask application which takes in the link of a news article, and returns a list of the top 5 postings of it on Reddit, as well as the general political sentiment expressed within the comments of each posting. The hope is that this may lead people to being able to explore the different interpretations of the same story in different online communities, as well as the spread of political responses.
+This project is a Flask application which takes in the link of a news article, and returns a list of the top 5 postings of it on Reddit, as well as the general political sentiment expressed within the comments of each posting. The hope is that this may lead people to being able to explore the different interpretations of the same story in different online communities, as well as have metrics for the spectrum of political discource within these communities.
 
 # How do I launch it?
 
