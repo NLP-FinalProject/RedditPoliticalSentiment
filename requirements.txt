@@ -10,5 +10,5 @@ urllib3==1.13.1
 Keras==2.1.6
 tflearn==0.3.2
 requests==2.9.1
-nltk==3.2.5
+nltk==3.4.5
 beautifulsoup4==4.6.0
